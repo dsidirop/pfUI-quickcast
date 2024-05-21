@@ -4,14 +4,14 @@ A more performant flavour of the '/pfcast' command from pfUI for Vanilla Warcraf
 
 # 🚧 Work In Progress - Coming Soon 🚧
 
-## 🕮  Usage:
+## 🕮  Basic Usage:
 
 - `/pfquickcast <spell_name>`
   
   Used in macros to cast spells p.e. on pfUI frames via mouse-hover.
 
 
-- `/script pfUIQuick:Cast("<spell_name>")`
+- `/script SlashCmdList.PFQUICKCAST("<spell_name>")`
 
   Same as above via direct invocation of the underlying API of this addon. This is meant to be used in more complex Lua scripts in addons like SuperMacro etc
 

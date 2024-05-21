@@ -1,0 +1,9 @@
+{
+    "diagnostics.globals": [
+        "pfUI"
+    ],
+    "diagnostics.disable": [
+        "undefined-global",
+        "lowercase-global"
+    ]
+}
