@@ -2,4 +2,31 @@
 
 A more performant flavour of the '/pfcast' command from pfUI for Vanilla Warcraft 1.12 and its family of derivatives.
 
-## 🚧 Work In Progress - Coming Soon 🚧
+# 🚧 Work In Progress - Coming Soon 🚧
+
+## 🕮  Usage:
+
+- `/pfquickcast <spell_name>`
+  
+  Used in macros to cast spells p.e. on pfUI frames via mouse-hover.
+
+
+- `/script pfUIQuick:Cast("<spell_name>")`
+
+  Same as above via direct invocation of the underlying API of this addon. This is meant to be used in more complex Lua scripts in addons like SuperMacro etc
+
+
+## 🏗️  Installation
+
+1. Download the **[latest version](https://github.com/dsidirop/pfUI-quickcast/archive/refs/heads/main.zip)**
+2. Unpack the .zip file
+3. Rename the folder "pfUI-quickcast-main" → "pfUI-quickcast"
+4. Copy "pfUI-quickcast" into
+
+       <Your Warcraft Directory>\Interface\AddOns
+
+5. Restart World of Warcraft
+
+## 🟡  Credits
+
+- [Shagu](https://github.com/shagu) author of [pfUI](https://github.com/shagu/pfUI) 
