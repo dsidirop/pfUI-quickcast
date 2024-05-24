@@ -114,7 +114,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
     end
 
-    _G.SLASH_PFQUICKCAST1, _G.SLASH_PFQUICKCAST2, _G.SLASH_PFQUICKCAST3, _G.SLASH_PFQUICKCAST4 = "/pfquickcast:any", "/pfquickcast.any", "/pfquickcast_any", "/pfquickcast"
+    _G.SLASH_PFQUICKCAST_ANY1, _G.SLASH_PFQUICKCAST_ANY2, _G.SLASH_PFQUICKCAST_ANY3, _G.SLASH_PFQUICKCAST_ANY4 = "/pfquickcast:any", "/pfquickcast.any", "/pfquickcast_any", "/pfquickcast"
     function SlashCmdList.PFQUICKCAST_ANY(spell) -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
@@ -197,7 +197,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
 
             _pfui_ui_mouseover.unit = targetOfTarget
-            return targetOfTarget, false
+            return targetOfTarget, true
         end
 
         return "player", false

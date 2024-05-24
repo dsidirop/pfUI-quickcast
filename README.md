@@ -85,7 +85,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 - `/pfquickcast:any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 
-  <br/>Used in macros to cast any spell defensive or offensive to any target friendly or hostile p.e. on pfUI frames via mouse-hover.<br/>
+  <br/>Used in macros to cast spells to any target (friendly, neutral or hostile) p.e. on pfUI frames via mouse-hover.<br/>
 
 
 
