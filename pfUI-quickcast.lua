@@ -20,6 +20,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return -- unit frames are not loaded? abort
     end
 
+    -- region helpers
+
     local _pfui_ui_mouseover = pfUI.uf.mouseover or {} -- store the original mouseover unit
 
     local _spell_target_units = (function()
@@ -31,7 +33,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return x
     end)()
 
-    local function getUnitString(unit)
+    local function tryGetUnitAsTeamUnit(unit)
         for _, unitstr in pairs(_spell_target_units) do
             if UnitIsUnit(unit, unitstr) then -- if the mouseover unit and then partyX unit are the same then return partyX etc
                 return unitstr
@@ -43,7 +45,23 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- try to find a valid (friendly) unitstring that can be used for SpellTargetUnit(unit) to avoid another target switch
     end
 
-    local function deduceIntendedTarget()
+    local function onCast(spell)
+        local cvar_selfcast = GetCVar("AutoSelfCast")
+        if cvar_selfcast == "0" then -- cast without selfcast cvar setting to allow spells to use spelltarget
+            CastSpellByName(spell, nil)
+            return
+        end
+
+        SetCVar("AutoSelfCast", "0")
+        pcall(CastSpellByName, spell, nil)
+        SetCVar("AutoSelfCast", cvar_selfcast)
+    end
+
+    -- endregion helpers
+
+    -- region   /pfquickcast.any
+
+    local function deduceIntendedTarget_forGenericSpells()
         local unit = "mouseover"
         if not UnitExists(unit) then
             local frame = GetMouseFocus()
@@ -60,7 +78,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local unitstr = not UnitCanAssist("player", "target") -- 00
             and UnitCanAssist("player", unit)
-            and getUnitString(unit)
+            and tryGetUnitAsTeamUnit(unit)
 
         if unitstr or UnitIsUnit("target", unit) then -- no target change required   we can either use spell target or the unit that is already our current target
             _pfui_ui_mouseover.unit = (unitstr or "target")
@@ -74,26 +92,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         --     however if the mouseover is friendly and the target is not we can try to obtain the best unitstring for the later SpellTargetUnit() call
     end
 
-    function pfUIQuickCast.OnCast(spell, proper_target) -- keep the proper target parameter even if its not needed per se   this method is intended to be hooked upon by third party addons
-        local cvar_selfcast = GetCVar("AutoSelfCast")
-        if cvar_selfcast == "0" then                -- cast without selfcast cvar setting to allow spells to use spelltarget
-            CastSpellByName(spell, nil)
-            return
-        end
-
-        SetCVar("AutoSelfCast", "0")
-        pcall(CastSpellByName, spell, nil)
-        SetCVar("AutoSelfCast", cvar_selfcast)
-    end
-
     local function setTargetIfNeededAndCast(spell, proper_target, use_target_toggle_workaround)
         if use_target_toggle_workaround then
             TargetUnit(proper_target)
         end
 
-        pfUIQuickCast.OnCast(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+        onCast(spell)
 
-        if SpellIsTargeting() then             -- if the spell is awaiting a target to be specified then set spell target to proper_target
+        if SpellIsTargeting() then -- if the spell is awaiting a target to be specified then set spell target to proper_target
             SpellTargetUnit(proper_target)
         end
 
@@ -108,19 +114,132 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
     end
 
-    _G.SLASH_PFQUICKCAST1 = "/pfquickcast"
-    function SlashCmdList.PFQUICKCAST(spell) -- we export this function to the global scope so as to make it accessible to users lua scripts
+    _G.SLASH_PFQUICKCAST1, _G.SLASH_PFQUICKCAST2, _G.SLASH_PFQUICKCAST3, _G.SLASH_PFQUICKCAST4 = "/pfquickcast:any", "/pfquickcast.any", "/pfquickcast_any", "/pfquickcast"
+    function SlashCmdList.PFQUICKCAST_ANY(spell) -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spell then
             return
         end
 
-        local proper_target, use_target_toggle_workaround = deduceIntendedTarget()
+        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forGenericSpells()
         if proper_target == nil then
             return
         end
 
         setTargetIfNeededAndCast(spell, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
     end
+
+    -- endregion    /pfquickcast.any
+
+    -- region   /pfquickcast.heal
+
+    function pfUIQuickCast.OnHeal(spell, proper_target)
+        -- keep the proper_target parameter even if its not needed per se this method calls to this
+        -- method are intended to be hooked-upon/intercepted by third party heal-autoranking addons
+        return onCast(spell)
+    end
+
+    local _mouseover = "mouseover"
+    local function deduceIntendedTarget_forHealing()
+        -- todo   ensure that we guard close elegantly if the eventual target is friendly but dead or out of range or banished or generally unable to receive heals for some reason
+
+        if UnitCanAssist("player", _mouseover) then
+            if UnitIsUnit(_mouseover, "target") then
+                _pfui_ui_mouseover.unit = "target"
+                return "target", false
+            end
+
+            local unitAsTeamUnit = tryGetUnitAsTeamUnit(_mouseover) -- "mouseover" -> "party1" or "raid1" etc
+            if unitAsTeamUnit then
+                _pfui_ui_mouseover.unit = unitAsTeamUnit
+                return unitAsTeamUnit, false
+            end
+
+            _pfui_ui_mouseover.unit = _mouseover
+            return _mouseover, true
+        end
+
+        local mouseFrame = GetMouseFocus()
+        if mouseFrame.label and mouseFrame.id then
+            local unit = mouseFrame.label .. mouseFrame.id
+
+            if UnitCanAssist("player", unit) then
+                if UnitIsUnit(unit, "target") then
+                    _pfui_ui_mouseover.unit = "target"
+                    return "target", false
+                end
+
+                -- todo   examine if we really need this here ...
+                local unitAsTeamUnit = tryGetUnitAsTeamUnit(unit) -- "mouseover" -> "party1" or "raid1" etc
+                if unitAsTeamUnit then
+                    _pfui_ui_mouseover.unit = unitAsTeamUnit
+                    return unitAsTeamUnit, false
+                end
+
+                _pfui_ui_mouseover.unit = unit
+                return unit, true
+            end
+        end
+
+        if UnitCanAssist("player", "target") then -- if we get here we have no mouse-over or mouse-focus so we evaluate the currently selected target
+            _pfui_ui_mouseover.unit = "target"
+            return _pfui_ui_mouseover.unit, false
+        end
+
+        local targetOfTarget = "targettarget"
+        if UnitCanAssist("player", targetOfTarget) then -- the target is not a friendly unit so we try to heal the target of the target   useful fallback behaviour both when soloing and when raid healing
+            -- todo   examine if we really need this here ...
+            local unitAsTeamUnit = tryGetUnitAsTeamUnit(targetOfTarget)  -- "mouseover" -> "party1" or "raid1" etc
+            if unitAsTeamUnit then
+                _pfui_ui_mouseover.unit = unitAsTeamUnit
+                return unitAsTeamUnit, false
+            end
+
+            _pfui_ui_mouseover.unit = targetOfTarget
+            return targetOfTarget, false
+        end
+
+        return "player", false
+    end
+
+    local function setTargetIfNeededAndHeal(spell, proper_target, use_target_toggle_workaround)
+        if use_target_toggle_workaround then
+            TargetUnit(proper_target)
+        end
+
+        pfUIQuickCast.OnHeal(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+
+        if SpellIsTargeting() then -- if the spell is awaiting a target to be specified then set spell target to proper_target
+            SpellTargetUnit(proper_target)
+        end
+
+        if SpellIsTargeting() then -- at this point if we the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
+            SpellStopTargeting()
+        end
+
+        _pfui_ui_mouseover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
+
+        if use_target_toggle_workaround then
+            TargetLastTarget()
+        end
+    end
+
+    _G.SLASH_PFQUICKCAST_HEAL1, _G.SLASH_PFQUICKCAST_HEAL2, _G.SLASH_PFQUICKCAST_HEAL3, _G.SLASH_PFQUICKCAST_HEAL4 = "/pfquickcast:heal", "/pfquickcast.heal", "/pfquickcast_heal", "/pfquickcastheal"
+    function SlashCmdList.PFQUICKCAST_HEAL(spell) -- we export this function to the global scope so as to make it accessible to users lua scripts
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spell then
+            return
+        end
+
+        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forHealing()
+        if proper_target == nil then
+            return
+        end
+
+        setTargetIfNeededAndHeal(spell, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+    end
+
+    -- endregion /pfquickcast.heal
 end)
