@@ -61,14 +61,31 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 - `/pfquickcast:heal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL("<healing_spell_name>")` )
 
-  <br/>Used in macros to cast healing spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
+  <br/>Casts healing spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
+ 
+  <br/>If an enemy unit is mouse-hovered, the spell will be cast on its target (if it's friendly). 
 
-  <br/>Use this flavour for healing spells as it's the one that should get intercepted by healing auto-ranking
-       addons for optimum performance based on its apparent intention **to heal**.<br/><br/>
+  <br/>Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
+
+
+- `/pfquickcast:selfheal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELFHEAL("<healing_spell_name>")` )
+
+  <br/>Casts healing spells on your **character** no matter what.
+
+  <br/>Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
+
+
+- `/pfquickcast:self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
+
+  <br/>Casts spells on your **character** no matter what.
+
+  <br/>Note that (normally) this flavour is not interceptable by heal-auto-ranking addons and should be used for spells that are meant to be cast
+  exactly as you specify them on your character.<br/>
+
 
 - `/pfquickcast:friendlies <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIENDLIES("<spell_name>")` )
 
-  <br/>Used in macros to cast spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
+  <br/>Casts spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
 
   <br/>Use this flavour for **friendly** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).
 
@@ -78,14 +95,14 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 - `/pfquickcast:hostiles <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILES("<spell_name>")` )
 
-  <br/>Used in macros to cast spells on **hostile/neutral** targets p.e. via mouse-hover directly on the NPCs or in pfUI unit-frames.
+  <br/>Casts spells on **hostile/neutral** targets p.e. via mouse-hover directly on the NPCs or in pfUI unit-frames.
   
   <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).<br/>
 
 
 - `/pfquickcast:any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 
-  <br/>Used in macros to cast spells to any target (friendly, neutral or hostile) p.e. on pfUI frames via mouse-hover.<br/>
+  <br/>Casts spells to any target (friendly, neutral or hostile) p.e. on pfUI frames via mouse-hover.<br/>
 
 
 
