@@ -63,16 +63,29 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   <br/>Casts healing spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
  
-  <br/>If an enemy unit is mouse-hovered, the spell will be cast on its target (if it's friendly). 
+  <br/>- If an enemy unit is mouse-hovered, the spell will be cast on its target (if it's friendly).
 
-  <br/>Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
+  <br/>- If no suitable friendly target is found, the spell will **not** be cast even if you have AutoSelfCast=true in your CVars. This behaviour is by design different to what '/pfcast'
+  does, so that you won't accidentally heal yourself when you meant to heal someone else thus wasting mana and time in a raid context.
+
+  <br/>- You can in fact specify multiple healing spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
+  A typical use-case of this is with the Paladin's 'Holy Shock': 
+
+  ```lua
+  /pfquickcast:heal Holy Shock, Flash of Light
+  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light")
+  ```
+
+  <br/>- The healing spell that did get cast by the LUA method will be returned - otherwise the empty string '' will be returned.
+
+  <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
 
 - `/pfquickcast:selfheal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELFHEAL("<healing_spell_name>")` )
 
   <br/>Casts healing spells on your **character** no matter what.
 
-  <br/>Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
+  <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
 
 - `/pfquickcast:self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
