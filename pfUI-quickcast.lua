@@ -18,7 +18,9 @@ pfUIQuickCast = _pfUIQuickCast:New() -- globally exported singleton symbol for t
 pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region helpers
 
-    local _pairs = _G.pairs
+    local pairs_ = _G.pairs
+    local getSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
+    local getSpellIndex_ = _G.pfUI.api.libspell.GetSpellIndex
 
     local _player = "player"
     local _target = "target"
@@ -41,7 +43,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end)()
 
     local function tryTranslateUnitToStandardSpellTargetUnit(unit)
-        for _, spellTargetUnitName in _pairs(_spell_target_units) do
+        for _, spellTargetUnitName in pairs_(_spell_target_units) do
             if unit == spellTargetUnitName or UnitIsUnit(unit, spellTargetUnitName) then
                 -- if the mouseover unit and the partyX unit are the one and the same target then return partyX etc
                 return spellTargetUnitName
@@ -95,16 +97,34 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local spellsArray = parseSpellsString(spellsString)
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
-            spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+            local _, rank = getSpellInfo_(spell)
+            --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] spell='" .. tostring(spell) .. "'")
+            --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] rank='" .. tostring(rank) .. "'")
+            --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] spellID='" .. tostring(spellID) .. "'")
 
-            if SpellIsTargeting() then
-                -- if the spell is awaiting a target to be specified then set spell target to proper_target
-                SpellTargetUnit(proper_target)
-            end
+            if rank then -- check if the player indeed knows this spell   maybe he hasnt specced for it yet
+                local spellId, spellBookType = getSpellIndex_(spell)
+                
+                local usedAtTimestamp = GetSpellCooldown(spellId, spellBookType)
+                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] start='" .. tostring(start) .. "'")
+                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] duration='" .. tostring(duration) .. "'")
+                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
+                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] modRate='" .. tostring(modRate) .. "'")
+                --print("")
 
-            wasSpellCastSuccessful = not SpellIsTargeting()
-            if wasSpellCastSuccessful then
-                break
+                if usedAtTimestamp == 0 then
+                    spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+
+                    if SpellIsTargeting() then
+                        -- if the spell is awaiting a target to be specified then set spell target to proper_target
+                        SpellTargetUnit(proper_target)
+                    end
+
+                    wasSpellCastSuccessful = not SpellIsTargeting() -- todo  test that spells on cooldown are not considered as successfully cast
+                    if wasSpellCastSuccessful then
+                        break
+                    end    
+                end
             end
         end
 
