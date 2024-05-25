@@ -67,7 +67,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         SetCVar("AutoSelfCast", cvar_selfcast)
     end
 
-
     local _parsedSpellStringsCache = {}
     local function parseSpellsString(spellsString)
         if _parsedSpellStringsCache[spellsString] then
@@ -75,7 +74,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         local spellsArray = {}
-        for spell in string.gmatch(spellsString, "%s*([^,;]*[^%s,;])%s*") do
+        for spell in string.gfind(spellsString, "%s*([^,;]*[^,;])%s*") do
             table.insert(spellsArray, spell)
         end
 
@@ -83,7 +82,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return spellsArray
     end
 
-    local function setTargetIfNeededAndCast(spellCastCallback, spellsString, proper_target, use_target_toggle_workaround)
+    local function setTargetIfNeededAndCast(spellCastCallback, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)
         --print("** [pfUI-quickcast] setTargetIfNeededAndCast#05a proper_target=" .. tostring(proper_target))
         --print("** [pfUI-quickcast] setTargetIfNeededAndCast#05b use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
 
@@ -95,7 +94,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local spellsArray = parseSpellsString(spellsString)
         local wasSpellCastSuccessful = false
-        for spell in spellsArray do
+        for _, spell in spellsArray do
             spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
             if SpellIsTargeting() then
@@ -110,7 +109,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         _pfui_ui_mouseover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
-        if use_target_toggle_workaround then
+        if use_target_toggle_workaround or switch_back_to_previous_target_in_the_end then
             TargetLastTarget()
         end
 
@@ -127,7 +126,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region   /pfquickcast.any
 
-    local function deduceIntendedTarget_forGenericSpells() -- inspired by /pfcast implementation
+    local function deduceIntendedTarget_forGenericSpells()
+        -- inspired by /pfcast implementation
         local unit = _mouseover
         if not UnitExists(unit) then
             local frame = GetMouseFocus()
@@ -159,10 +159,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         --     however if the mouseover is friendly and the target is not we can try to obtain the best unitstring for the later SpellTargetUnit() call
     end
 
-    _G.SLASH_PFQUICKCAST_ANY1 = "/pfquickcast"
+    _G.SLASH_PFQUICKCAST_ANY1 = "/pfquickcast@any"
     _G.SLASH_PFQUICKCAST_ANY2 = "/pfquickcast:any"
     _G.SLASH_PFQUICKCAST_ANY3 = "/pfquickcast.any"
     _G.SLASH_PFQUICKCAST_ANY4 = "/pfquickcast_any"
+    _G.SLASH_PFQUICKCAST_ANY5 = "/pfquickcast"
     function SlashCmdList.PFQUICKCAST_ANY(spell)
         -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
@@ -186,7 +187,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     function pfUIQuickCast.OnHeal(spell, proper_target)
         -- keep the proper_target parameter even if its not needed per se this method   we want
         -- calls to this method to be hooked-upon/intercepted by third party heal-autoranking addons
-        return onCast(spell)
+        return onCast(spell, proper_target)
     end
 
     local function deduceIntendedTarget_forFriendlies()
@@ -200,22 +201,30 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                     return unitAsTeamUnit, false
                 end
 
-                return unit, true
+                return unit, true, false
+            end
+
+            if UnitIsEnemy(unit, _target) then
+                -- here the mouse-focused unit is hostile but its attacking a friendly unit so we can try casting on that one
+
+                TargetUnit(unit) -- todo   examine if this approach works as intended
+                return _target_of_target, false, true
             end
         end
 
-        if UnitCanAssist(_player, _mouseover) then --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
-            return _mouseover, UnitCanAssist(_player, _target) --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
+        if UnitCanAssist(_player, _mouseover) then
+            --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
+            return _mouseover, UnitCanAssist(_player, _target), false --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
         end
 
         if UnitCanAssist(_player, _target) then
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
-            return _target, false
+            return _target, false, false
         end
 
         if UnitCanAssist(_player, _target_of_target) then
             -- at this point the current target is not a friendly unit so we try to heal the target of the target   useful fallback behaviour both when soloing and when raid healing
-            return _target_of_target, false
+            return _target_of_target, false, false
         end
 
         return nil, false -- no valid target found
@@ -224,10 +233,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         --     since noone is using this kind of mousehover to heal himself
     end
 
-    _G.SLASH_PFQUICKCAST_HEAL1 = "/pfquickcast:heal"
-    _G.SLASH_PFQUICKCAST_HEAL2 = "/pfquickcast.heal"
-    _G.SLASH_PFQUICKCAST_HEAL3 = "/pfquickcast_heal"
-    _G.SLASH_PFQUICKCAST_HEAL4 = "/pfquickcastheal"
+    _G.SLASH_PFQUICKCAST_HEAL1 = "/pfquickcast@heal"
+    _G.SLASH_PFQUICKCAST_HEAL2 = "/pfquickcast:heal"
+    _G.SLASH_PFQUICKCAST_HEAL3 = "/pfquickcast.heal"
+    _G.SLASH_PFQUICKCAST_HEAL4 = "/pfquickcast_heal"
+    _G.SLASH_PFQUICKCAST_HEAL5 = "/pfquickcastheal"
     function SlashCmdList.PFQUICKCAST_HEAL(spellsString)
         -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
@@ -236,18 +246,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return ""
         end
 
-        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forFriendlies()
+        local proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end = deduceIntendedTarget_forFriendlies()
         if proper_target == nil then
             return ""
         end
 
-        return setTargetIfNeededAndCast(pfUIQuickCast.OnHeal, spellsString, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+        return setTargetIfNeededAndCast(pfUIQuickCast.OnHeal, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
     end
 
-    _G.SLASH_PFQUICKCAST_SELFHEAL1 = "/pfquickcast:selfheal"
-    _G.SLASH_PFQUICKCAST_SELFHEAL2 = "/pfquickcast.selfheal"
-    _G.SLASH_PFQUICKCAST_SELFHEAL3 = "/pfquickcast_selfheal"
-    _G.SLASH_PFQUICKCAST_SELFHEAL4 = "/pfquickcastselfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL1 = "/pfquickcast@selfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL2 = "/pfquickcast:selfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL3 = "/pfquickcast.selfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL4 = "/pfquickcast_selfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL5 = "/pfquickcastselfheal"
     function SlashCmdList.PFQUICKCAST_SELFHEAL(spellsString)
         -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
@@ -259,14 +270,35 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return setTargetIfNeededAndCast(pfUIQuickCast.OnHeal, spellsString, _player, false) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
     end
 
-    -- endregion /pfquickcast:heal and :selfheal
-    
-    -- region /pfquickcast:friendlies
+    -- endregion /pfquickcast@heal and :selfheal
 
-    _G.SLASH_PFQUICKCAST_FRIENDLIES1 = "/pfquickcast:friendlies"
-    _G.SLASH_PFQUICKCAST_FRIENDLIES2 = "/pfquickcast.friendlies"
-    _G.SLASH_PFQUICKCAST_FRIENDLIES3 = "/pfquickcast_friendlies"
-    _G.SLASH_PFQUICKCAST_FRIENDLIES4 = "/pfquickcastfriendlies"
+    -- region /pfquickcast@self
+    
+    _G.SLASH_PFQUICKCAST_SELF1 = "/pfquickcast@self"
+    _G.SLASH_PFQUICKCAST_SELF2 = "/pfquickcast:self"
+    _G.SLASH_PFQUICKCAST_SELF3 = "/pfquickcast.self"
+    _G.SLASH_PFQUICKCAST_SELF4 = "/pfquickcast_self"
+    _G.SLASH_PFQUICKCAST_SELF5 = "/pfquickcastself"
+    function SlashCmdList.PFQUICKCAST_SELF(spellsString)
+        -- we export this function to the global scope so as to make it accessible to users lua scripts
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return ""
+        end
+
+        return setTargetIfNeededAndCast(onCast, spellsString, _player, false)
+    end
+
+    -- endregion /pfquickcast@heal and :selfheal
+    
+    -- region /pfquickcast@friendlies
+
+    _G.SLASH_PFQUICKCAST_FRIENDLIES1 = "/pfquickcast@friendlies"
+    _G.SLASH_PFQUICKCAST_FRIENDLIES2 = "/pfquickcast:friendlies"
+    _G.SLASH_PFQUICKCAST_FRIENDLIES3 = "/pfquickcast.friendlies"
+    _G.SLASH_PFQUICKCAST_FRIENDLIES4 = "/pfquickcast_friendlies"
+    _G.SLASH_PFQUICKCAST_FRIENDLIES5 = "/pfquickcastfriendlies"
     function SlashCmdList.PFQUICKCAST_FRIENDLIES(spellsString)
         -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
@@ -280,8 +312,74 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return ""
         end
 
-        return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+        return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround)
     end
-    
-    -- endregion /pfquickcast:friendlies
+
+    -- endregion /pfquickcast@friendlies
+
+    -- region /pfquickcast@hostiles
+
+    local function deduceIntendedTarget_forHostiles()
+        -- todo   at some point this could be merged with deduceIntendedTarget_forFriendlies 
+        local mouseFrame = GetMouseFocus() -- unit frames mouse hovering
+        if mouseFrame.label and mouseFrame.id then
+            local unit = mouseFrame.label .. mouseFrame.id
+
+            if not UnitIsFriend(_player, unit) then
+                -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not hostile ones
+
+                return unit, true -- todo   confirm that we need the target-switch hack here for hostile spells
+            end
+
+            if UnitIsFriend(unit, _target) then
+                -- here the mouse-focused unit is friendly but its attacking a hostile unit so we can try casting on that one
+
+                TargetUnit(unit) -- todo   examine if this approach works as intended
+                return _target_of_target, false, true
+            end
+        end
+
+        if not UnitIsFriend(_player, _mouseover) then
+            --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
+            return _mouseover, not UnitCanAssist(_player, _target) --00 we need to use the target-swap hack here if and only if the currently selected target is hostile otherwise the spell will land on the currently selected enemy target
+        end
+
+        if not UnitIsFriend(_player, _target) then
+            -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
+            return _target, false
+        end
+
+        if not UnitIsFriend(_player, _target_of_target) then
+            -- at this point the current target is a friendly unit so we try to spell-cast on its own hostile target   useful fallback behaviour both when soloing and when raid healing
+            return _target_of_target, false
+        end
+
+        return nil, false -- no valid target found
+
+        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _mouseover) returns false but it doesnt matter really
+        --     since noone is using this kind of mousehover to heal himself
+    end
+
+    _G.SLASH_PFQUICKCAST_HOSTILES1 = "/pfquickcast@hostiles"
+    _G.SLASH_PFQUICKCAST_HOSTILES2 = "/pfquickcast:hostiles"
+    _G.SLASH_PFQUICKCAST_HOSTILES3 = "/pfquickcast.hostiles"
+    _G.SLASH_PFQUICKCAST_HOSTILES4 = "/pfquickcast_hostiles"
+    _G.SLASH_PFQUICKCAST_HOSTILES5 = "/pfquickcasthostiles"
+    function SlashCmdList.PFQUICKCAST_HOSTILES(spellsString)
+        -- we export this function to the global scope so as to make it accessible to users lua scripts
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return ""
+        end
+
+        local proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end  = deduceIntendedTarget_forHostiles()
+        if proper_target == nil then
+            return ""
+        end
+
+        return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)
+    end
+
+    -- endregion /pfquickcast@hostiles
 end)

@@ -59,36 +59,42 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 ## 🕮  Basic Usage:
 
-- `/pfquickcast:heal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL("<healing_spell_name>")` )
+- `/pfquickcast@heal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL("<healing_spell_name>")` )
 
-  <br/>Casts healing spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
- 
-  <br/>- If an enemy unit is mouse-hovered, the spell will be cast on its target (if it's friendly).
+  <br/>Casts healing spells on **friendly** targets in the following order of priority:
 
-  <br/>- If no suitable friendly target is found, the spell will **not** be cast even if you have AutoSelfCast=true in your CVars. This behaviour is by design different to what '/pfcast'
-  does, so that you won't accidentally heal yourself when you meant to heal someone else thus wasting mana and time in a raid context.
+  <br/>- If the mouse hovers over a friendly unit-frame (or toon in the game world), then that friendly unit will be healed. 
 
-  <br/>- You can in fact specify multiple healing spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
+  <br/>- If the mouse hovers over an enemy unit-frame (or toon in the game world) that's attacking a friendly unit then that friendly unit will be healed.
+
+  <br/>- If none of two scenarios apply, the healing spell will be cast on the currently selected friendly target (if any.)
+
+  <br/>- If the currently selected target is hostile, the healing spell will be cast on it's friendly target (if any.)
+
+  <br/>- If no suitable target is found in the above, the spell will **not** be cast even if you have AutoSelfCast=true in your CVars. This behaviour is by design
+  different to what '/pfcast' does, so that you won't accidentally heal yourself when you meant to heal someone else thus wasting mana and time in a raid context.
+
+  <br/>- You can in fact specify multiple healing spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be tried to be cast and so on.
   A typical use-case of this is with the Paladin's 'Holy Shock': 
 
   ```lua
-  /pfquickcast:heal Holy Shock, Flash of Light
+  /pfquickcast@heal Holy Shock, Flash of Light
   /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light")
   ```
 
-  <br/>- The healing spell that did get cast by the LUA method will be returned - otherwise the empty string '' will be returned.
+  <br/>- The healing spell that did get cast by the LUA method will be returned - if no spell was castable then the empty string '' will be returned.
 
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
 
-- `/pfquickcast:selfheal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELFHEAL("<healing_spell_name>")` )
+- `/pfquickcast@selfheal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELFHEAL("<healing_spell_name>")` )
 
   <br/>Casts healing spells on your **character** no matter what.
 
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
 
-- `/pfquickcast:self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
+- `/pfquickcast@self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
 
   <br/>Casts spells on your **character** no matter what.
 
@@ -96,7 +102,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   exactly as you specify them on your character.<br/>
 
 
-- `/pfquickcast:friendlies <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIENDLIES("<spell_name>")` )
+- `/pfquickcast@friendlies <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIENDLIES("<spell_name>")` )
 
   <br/>Casts spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
 
@@ -106,14 +112,18 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   exactly as you specify them on friendly targets.<br/>
 
 
-- `/pfquickcast:hostiles <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILES("<spell_name>")` )
+- `/pfquickcast@hostiles <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILES("<spell_name>")` )
 
-  <br/>Casts spells on **hostile/neutral** targets p.e. via mouse-hover directly on the NPCs or in pfUI unit-frames.
-  
+  <br/>Casts spells on **hostile / neutral** targets p.e. via mouse-hover directly on the NPCs or in pfUI unit-frames.
+
+  <br/>- If a friendly unit is mouse-hovered, the spell will be cast on its target (if it's hostile). This way you can, for example, always auto-target the target of the tank.
+
+  <br/>- You can in fact specify multiple spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
+
   <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).<br/>
 
 
-- `/pfquickcast:any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
+- `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 
   <br/>Casts spells to any target (friendly, neutral or hostile) p.e. on pfUI frames via mouse-hover.<br/>
 
