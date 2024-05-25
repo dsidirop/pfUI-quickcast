@@ -135,7 +135,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion    /pfquickcast.any
 
-    -- region   /pfquickcast.heal
+    -- region   /pfquickcast:heal  and  :selfheal
 
     function pfUIQuickCast.OnHeal(spell, proper_target)
         -- keep the proper_target parameter even if its not needed per se this method calls to this
@@ -230,5 +230,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         setTargetIfNeededAndHeal(spell, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
     end
 
-    -- endregion /pfquickcast.heal
+    _G.SLASH_PFQUICKCAST_SELFHEAL1 = "/pfquickcast:selfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL2 = "/pfquickcast.selfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL3 = "/pfquickcast_selfheal"
+    _G.SLASH_PFQUICKCAST_SELFHEAL4 = "/pfquickcastselfheal"
+    function SlashCmdList.PFQUICKCAST_SELFHEAL(spell) -- we export this function to the global scope so as to make it accessible to users lua scripts
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spell then
+            return
+        end
+
+        setTargetIfNeededAndHeal(spell, "player", false) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+    end
+
+    -- endregion /pfquickcast:heal and :selfheal
 end)
