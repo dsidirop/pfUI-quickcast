@@ -99,7 +99,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
 
-- `/pfquickcast@selfheal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELFHEAL("<healing_spell_name>")` )
+- `/pfquickcast@healself <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL_SELF("<healing_spell_name>")` )
 
   <br/>Casts healing spells on your **character** no matter what.
 

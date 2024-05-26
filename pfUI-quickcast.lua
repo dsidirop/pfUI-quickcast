@@ -250,7 +250,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion    /pfquickcast.any
 
-    -- region   /pfquickcast:heal  and  :selfheal
+    -- region   /pfquickcast:heal  and  :healself
 
     function pfUIQuickCast.OnHeal(spell, proper_target)
         -- keep the proper_target parameter even if its not needed per se this method   we want
@@ -321,12 +321,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         )
     end
 
-    _G.SLASH_PFQUICKCAST_SELFHEAL1 = "/pfquickcast@selfheal"
-    _G.SLASH_PFQUICKCAST_SELFHEAL2 = "/pfquickcast:selfheal"
-    _G.SLASH_PFQUICKCAST_SELFHEAL3 = "/pfquickcast.selfheal"
-    _G.SLASH_PFQUICKCAST_SELFHEAL4 = "/pfquickcast_selfheal"
-    _G.SLASH_PFQUICKCAST_SELFHEAL5 = "/pfquickcastselfheal"
-    function SlashCmdList.PFQUICKCAST_SELFHEAL(spellsString)
+    _G.SLASH_PFQUICKCAST_HEAL_SELF1 = "/pfquickcast@healself"
+    _G.SLASH_PFQUICKCAST_HEAL_SELF2 = "/pfquickcast:healself"
+    _G.SLASH_PFQUICKCAST_HEAL_SELF3 = "/pfquickcast.healself"
+    _G.SLASH_PFQUICKCAST_HEAL_SELF4 = "/pfquickcast_healself"
+    _G.SLASH_PFQUICKCAST_HEAL_SELF5 = "/pfquickcasthealself"
+    function SlashCmdList.PFQUICKCAST_HEAL_SELF(spellsString)
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
@@ -341,7 +341,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         )
     end
 
-    -- endregion /pfquickcast@heal and :selfheal
+    -- endregion /pfquickcast@heal and :healself
 
     -- region /pfquickcast@self
     
