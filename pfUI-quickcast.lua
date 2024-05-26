@@ -142,16 +142,20 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         _pfui_ui_mouseover.unit = proper_target
 
         local spellsArray = parseSpellsString(spellsString)
+        local spellThatQualified = nil
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
             if isSpellUsable(spell) then
+                -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] spell=" .. tostring(spell))
                 spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
-                if proper_target == _player then -- self-casts are 99.9999% successful
+                if proper_target == _player then -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages
+                    spellThatQualified = spell
                     wasSpellCastSuccessful = true
                     break
                 end
 
+                -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] SpellIsTargeting()=" .. tostring(SpellIsTargeting()))
                 if SpellIsTargeting() then
                     -- if the spell is awaiting a target to be specified then set spell target to proper_target
                     SpellTargetUnit(proper_target)
@@ -159,6 +163,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
                 wasSpellCastSuccessful = not SpellIsTargeting() -- todo  test that spells on cooldown are not considered as successfully cast
                 if wasSpellCastSuccessful then
+                    spellThatQualified = spell
                     break
                 end
             end
@@ -171,13 +176,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         _pfui_ui_mouseover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
 
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] wasSpellCastSuccessful=" .. tostring(wasSpellCastSuccessful))
         if not wasSpellCastSuccessful then
             -- at this point if the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
             SpellStopTargeting()
             return nil
         end
 
-        return spell
+        return spellThatQualified
     end
 
     -- endregion helpers
