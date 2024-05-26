@@ -114,19 +114,20 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local usedAtTimestamp = getSpellCooldown_(spellId, spellBookType)
 
-        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] start='" .. tostring(start) .. "'")
-        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] duration='" .. tostring(duration) .. "'")
-        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
-        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] modRate='" .. tostring(modRate) .. "'")
-        --print("")
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] start='" .. tostring(start) .. "'")
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] duration='" .. tostring(duration) .. "'")
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] modRate='" .. tostring(modRate) .. "'")
+        -- print("")
 
         return usedAtTimestamp == 0 -- check if the spell is off cooldown
     end
 
     local function setTargetIfNeededAndCast(spellCastCallback, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)
-        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
-        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
-        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switch_back_to_previous_target_in_the_end=" .. tostring(switch_back_to_previous_target_in_the_end))
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] spellsString=" .. tostring(spellsString))
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switch_back_to_previous_target_in_the_end=" .. tostring(switch_back_to_previous_target_in_the_end))
 
         if use_target_toggle_workaround then
             TargetUnit(proper_target)
@@ -254,7 +255,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return unit, true, false
             end
         end
-
+        
+        -- UnitExists(_mouseover) no need to check this here
         if UnitCanAssist(_player, _mouseover) then
             --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
             return _mouseover, UnitCanAssist(_player, _target), false --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
@@ -363,39 +365,51 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region /pfquickcast@hostiles
 
     local function deduceIntendedTarget_forHostiles()
-        -- todo   at some point this could be merged with deduceIntendedTarget_forFriendlies 
+        -- print("********")
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 000")
+        
         local mouseFrame = GetMouseFocus() -- unit frames mouse hovering
         if mouseFrame.label and mouseFrame.id then
             local unit = mouseFrame.label .. mouseFrame.id
 
-            if not UnitIsFriend(_player, unit) then
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 010 hostile unit=" .. tostring(unit))
+
+            if UnitExists(unit) and not UnitIsFriend(_player, unit) then
                 -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not hostile ones
+                
+                -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 020 hostile unit=" .. tostring(unit) .. ", unitAsTeamUnit=" .. tostring(unitAsTeamUnit))
 
-                return unit, true -- todo   confirm that we need the target-switch hack here for hostile spells
+                return unit, false
             end
 
-            if UnitIsFriend(unit, _target) then
-                -- here the mouse-focused unit is friendly but its attacking a hostile unit so we can try casting on that one
-
-                TargetUnit(unit) -- todo   examine if this approach works as intended
-                return _target_of_target, false, true
-            end
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 030")
         end
 
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040")
         if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) then
             --00 mouse hovering directly over hostiles? (meaning their toon - not their unit frame)
-            return _mouseover, not UnitCanAssist(_player, _target) --00 we need to use the target-swap hack here if and only if the currently selected target is hostile otherwise the spell will land on the currently selected enemy target
+
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 050    UnitName(_mouseover)='" .. UnitName(_mouseover) .. "'")
+            
+            return _mouseover, false
         end
 
-        if not UnitIsFriend(_player, _target) then
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 060")
+        if UnitExists(_target) and not UnitIsFriend(_player, _target) then
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 070")
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
             return _target, false
         end
 
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 080")
         if not UnitIsFriend(_player, _target_of_target) then
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 090")
+            
             -- at this point the current target is a friendly unit so we try to spell-cast on its own hostile target   useful fallback behaviour both when soloing and when raid healing
             return _target_of_target, false
         end
+
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 100")
 
         return nil, false -- no valid target found
 
