@@ -475,7 +475,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@hostiles
 
-    -- region /pfquickcast@toteheal
+    -- region /pfquickcast@healtote
 
     local function deduceIntendedTarget_forFriendlyTargetOfTheEnemy()
 
@@ -521,12 +521,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return nil, false -- no valid target found
     end
 
-    _G.SLASH_PFQUICKCAST_TOTE_HEAL1 = "/pfquickcast@toteheal"
-    _G.SLASH_PFQUICKCAST_TOTE_HEAL2 = "/pfquickcast:toteheal"
-    _G.SLASH_PFQUICKCAST_TOTE_HEAL3 = "/pfquickcast.toteheal"
-    _G.SLASH_PFQUICKCAST_TOTE_HEAL4 = "/pfquickcast_toteheal"
-    _G.SLASH_PFQUICKCAST_TOTE_HEAL5 = "/pfquickcasttoteheal"
-    function SlashCmdList.PFQUICKCAST_TOTE_HEAL(spellsString)
+    _G.SLASH_PFQUICKCAST_HEAL_TOTE1 = "/pfquickcast@healtote"
+    _G.SLASH_PFQUICKCAST_HEAL_TOTE2 = "/pfquickcast:healtote"
+    _G.SLASH_PFQUICKCAST_HEAL_TOTE3 = "/pfquickcast.healtote"
+    _G.SLASH_PFQUICKCAST_HEAL_TOTE4 = "/pfquickcast_healtote"
+    _G.SLASH_PFQUICKCAST_HEAL_TOTE5 = "/pfquickcasthealtote"
+    function SlashCmdList.PFQUICKCAST_HEAL_TOTE(spellsString)
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
@@ -546,5 +546,5 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         )
     end
 
-    -- endregion /pfquickcast@toteheal
+    -- endregion /pfquickcast@healtote
 end)

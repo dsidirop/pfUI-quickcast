@@ -106,7 +106,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
 
-- `/pfquickcast@toteheal <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_TOTE_HEAL("<spell_name>")` )
+- `/pfquickcast@healtote <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL_TOTE("<spell_name>")` )
 
   <br/>Casts heals to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over a **hostile** unit in which case it will find the friendly target that it's attacking
   to heal it.
