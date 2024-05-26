@@ -382,8 +382,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
-        if not UnitIsFriend(_player, _mouseover) then
-            --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
+        if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) then
+            --00 mouse hovering directly over hostiles? (meaning their toon - not their unit frame)
             return _mouseover, not UnitCanAssist(_player, _target) --00 we need to use the target-swap hack here if and only if the currently selected target is hostile otherwise the spell will land on the currently selected enemy target
         end
 
