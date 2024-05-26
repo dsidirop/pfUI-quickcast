@@ -19,6 +19,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region helpers
 
     local pairs_ = _G.pairs
+    local getCVar_ = _G.GetCVar
     local getSpellCooldown_ = _G.GetSpellCooldown
     
     local pfGetSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
@@ -67,8 +68,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return
         end
         
-        -- todo   we should return false if the spell is not castable p.e. due to oom or out of range or due to cooldown (like p.e. paladin's holy shock)
-        local cvar_selfcast = GetCVar("AutoSelfCast")
+        local cvar_selfcast = getCVar_("AutoSelfCast")
         if cvar_selfcast == "0" then
             -- cast without selfcast cvar setting to allow spells to use spelltarget
             CastSpellByName(spell, nil)
@@ -186,7 +186,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 unit = frame.label .. frame.id
             elseif UnitExists(_target) then
                 unit = _target
-            elseif GetCVar("AutoSelfCast") == "1" then
+            elseif getCVar_("AutoSelfCast") == "1" then
                 unit = _player
             else
                 return nil
