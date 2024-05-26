@@ -172,6 +172,19 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 5. Restart World of Warcraft
 
+
+
+## 💡  Heal-Auto-Ranking Addons Supporting '/pfquickcast@heal*' Commands    
+
+List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
+                         
+- [SmartHealer (forked)](https://github.com/dsidirop/SmartHealer):
+                                                         
+  This is a fork of the original SmartHealer addon which supports the '/pfquickcast@heal*' commands among other QoL changes.
+
+  The original one can be found here [SmartHealer (original)](https://github.com/melbaa/SmartHealer).
+
+
 ## 🟡  Credits
 
 - [Shagu](https://github.com/shagu) author of [pfUI](https://github.com/shagu/pfUI) 
