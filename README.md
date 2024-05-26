@@ -65,12 +65,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   <br/>- If the mouse hovers over a friendly unit-frame (or toon in the game world), then that friendly unit will be healed. 
 
-  <br/>- If the mouse hovers over an enemy unit-frame (or toon in the game world) that's attacking a friendly unit then that friendly unit will be healed.
-
-  <br/>- If none of above scenarios applies, then the healing spell will be cast on the currently selected friendly target (if any.)
-
-  <br/>- If the currently selected target is hostile, and it's attacking a friendly target, then the healing spell will be cast on said friendly target without changing the currently
-  selected hostile target.
+  <br/>- Otherwise the healing spell will be cast on the currently selected friendly target (if any.)
 
   <br/>- If no suitable target is found in the above cases, the spell will **not** be cast even if you have AutoSelfCast=true in your CVars. This behaviour is by design
   the exact opposite to what '/pfcast' does, so that you won't accidentally heal yourself when you meant to heal someone else thus wasting both mana and precious time in a raid context.
@@ -117,8 +112,6 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 - `/pfquickcast@hostiles <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILES("<spell_name>")` )
 
   <br/>Casts spells on **hostile / neutral** targets p.e. via mouse-hover directly on the NPCs or in pfUI unit-frames.
-
-  <br/>- If a friendly unit is mouse-hovered, the spell will be cast on its target (if it's hostile). This way you can, for example, always auto-target the target of the tank.
 
   <br/>- You can in fact specify multiple spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
 

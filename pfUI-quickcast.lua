@@ -85,8 +85,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function setTargetIfNeededAndCast(spellCastCallback, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)
-        --print("** [pfUI-quickcast] setTargetIfNeededAndCast#05a proper_target=" .. tostring(proper_target))
-        --print("** [pfUI-quickcast] setTargetIfNeededAndCast#05b use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
+        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
+        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
+        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switch_back_to_previous_target_in_the_end=" .. tostring(switch_back_to_previous_target_in_the_end))
 
         if use_target_toggle_workaround then
             TargetUnit(proper_target)
@@ -128,10 +129,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
-        _pfui_ui_mouseover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
         if use_target_toggle_workaround or switch_back_to_previous_target_in_the_end then
+            -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switching back target ...")
             TargetLastTarget()
         end
+
+        _pfui_ui_mouseover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
 
         if not wasSpellCastSuccessful then
             -- at this point if the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
@@ -214,7 +217,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local mouseFrame = GetMouseFocus() -- unit frames mouse hovering
         if mouseFrame.label and mouseFrame.id then
             local unit = mouseFrame.label .. mouseFrame.id
-
             if UnitCanAssist(_player, unit) then
                 local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- _mouseover -> "party1" or "raid1" etc    todo   examine if we really need this here ...
                 if unitAsTeamUnit then
@@ -223,19 +225,20 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
                 return unit, true, false
             end
-
-            if UnitIsEnemy(unit, _target) then
-                -- here the mouse-focused unit is hostile but its attacking a friendly unit so we can try casting on that one
-
-                TargetUnit(unit) -- todo   examine if this approach works as intended
-                return _target_of_target, false, true
-            end
         end
 
         if UnitCanAssist(_player, _mouseover) then
             --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
             return _mouseover, UnitCanAssist(_player, _target), false --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
         end
+
+        --if UnitExists(_mouseover) then
+        --    TargetUnit(_mouseover)
+        --    --if UnitIsFriend(_player, _target_of_target) then
+        --    --    print("** [pfUI-quickcast] [mouse-over] mouse-over attacks a friendly one")
+        --    --end
+        --    TargetLastTarget()
+        --end
 
         if UnitCanAssist(_player, _target) then
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
