@@ -403,7 +403,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
             -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 010 hostile unit=" .. tostring(unit))
 
-            if UnitExists(unit) and not UnitIsFriend(_player, unit) then
+            if UnitExists(unit) and not UnitIsFriend(_player, unit) and not UnitIsUnit(_target, unit) then
                 -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not hostile ones
                 
                 -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 020 hostile unit=" .. tostring(unit) .. ", unitAsTeamUnit=" .. tostring(unitAsTeamUnit))
@@ -414,13 +414,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 030")
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040")
-        if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) then
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040 UnitExists(_mouseover)="..tostring(UnitExists(_mouseover)))
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040 not UnitIsFriend(_player, _mouseover)="..tostring(not UnitIsFriend(_player, _mouseover)))
+        if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) and not UnitIsUnit(_target, _mouseover) then
             --00 mouse hovering directly over hostiles? (meaning their toon - not their unit frame)
 
             -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 050    UnitName(_mouseover)='" .. UnitName(_mouseover) .. "'")
             
-            return _mouseover, false
+            return _mouseover, true
         end
 
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 060")
