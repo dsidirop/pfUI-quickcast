@@ -116,6 +116,17 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>- This flavour is meant to be used mainly when healing boss-fights that necessitate tank swaps, in which case you want your heals to land automatically on the tank that the boss is currently
   attacking at any given moment.<br/>
 
+  <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a hostile one.<br/>
+
+  ```lua                                                        
+  -- you can bind this macro to your scroll-wheel-up/down for effective spam healing via mouse-hover
+
+  /pfquickcast@heal       Holy Shock, Flash of Light --         if you mouse-hover over friendly units
+  /pfquickcast@healtote   Holy Shock, Flash of Light --         if you mouse-hover over hostile units you will heal the friendly targets they're attacking (if any)
+  
+  -- alternative syntax
+  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL_TOTE("Holy Shock, Flash of Light");
+  ```
 
 - `/pfquickcast@self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
 
