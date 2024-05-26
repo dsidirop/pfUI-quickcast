@@ -106,6 +106,17 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
 
+- `/pfquickcast@toteheal <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_TOTE_HEAL("<spell_name>")` )
+
+  <br/>Casts heals to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over a **hostile** unit in which case it will find the friendly target that it's attacking
+  to heal it.
+
+  <br/>- Note that this flavour will automatically **change** your current target to the hostile unit you're mouse-hovering over. Use with caution.
+
+  <br/>- This flavour is meant to be used mainly when healing boss-fights that necessitate tank swaps, in which case you want your heals to land automatically on the tank that the boss is currently
+  attacking at any given moment.<br/>
+
+
 - `/pfquickcast@self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
 
   <br/>Casts spells on your **character** no matter what.

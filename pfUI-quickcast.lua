@@ -229,7 +229,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     _G.SLASH_PFQUICKCAST_ANY4 = "/pfquickcast_any"
     _G.SLASH_PFQUICKCAST_ANY5 = "/pfquickcast"
     function SlashCmdList.PFQUICKCAST_ANY(spell)
-        -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spell then
@@ -260,7 +259,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function deduceIntendedTarget_forFriendlies()
-        local mouseFrame = GetMouseFocus() -- unit frames mouse hovering
+        local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
         if mouseFrame.label and mouseFrame.id then
             
             local unit = mouseFrame.label .. mouseFrame.id            
@@ -303,7 +302,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     _G.SLASH_PFQUICKCAST_HEAL4 = "/pfquickcast_heal"
     _G.SLASH_PFQUICKCAST_HEAL5 = "/pfquickcastheal"
     function SlashCmdList.PFQUICKCAST_HEAL(spellsString)
-        -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
@@ -329,7 +327,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     _G.SLASH_PFQUICKCAST_SELFHEAL4 = "/pfquickcast_selfheal"
     _G.SLASH_PFQUICKCAST_SELFHEAL5 = "/pfquickcastselfheal"
     function SlashCmdList.PFQUICKCAST_SELFHEAL(spellsString)
-        -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
@@ -354,7 +351,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     _G.SLASH_PFQUICKCAST_SELF4 = "/pfquickcast_self"
     _G.SLASH_PFQUICKCAST_SELF5 = "/pfquickcastself"
     function SlashCmdList.PFQUICKCAST_SELF(spellsString)
-        -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
@@ -374,7 +370,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     _G.SLASH_PFQUICKCAST_FRIENDS4 = "/pfquickcast_friends"
     _G.SLASH_PFQUICKCAST_FRIENDS5 = "/pfquickcastfriends"
     function SlashCmdList.PFQUICKCAST_FRIENDS(spellsString)
-        -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
@@ -386,7 +381,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround)
+        return setTargetIfNeededAndCast(
+                onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround
+        )
     end
 
     -- endregion /pfquickcast@friends
@@ -397,7 +397,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("********")
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 000")
         
-        local mouseFrame = GetMouseFocus() -- unit frames mouse hovering
+        local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
         if mouseFrame.label and mouseFrame.id then
             local unit = mouseFrame.label .. mouseFrame.id
 
@@ -417,7 +417,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040 UnitExists(_mouseover)="..tostring(UnitExists(_mouseover)))
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040 not UnitIsFriend(_player, _mouseover)="..tostring(not UnitIsFriend(_player, _mouseover)))
         if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) and not UnitIsUnit(_target, _mouseover) then
-            --00 mouse hovering directly over hostiles? (meaning their toon - not their unit frame)
+            --00 mouse hovering directly over a hostile toon in the game-world?
 
             -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 050    UnitName(_mouseover)='" .. UnitName(_mouseover) .. "'")
             
@@ -465,8 +465,86 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround)
+        return setTargetIfNeededAndCast(
+                onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround
+        )
     end
 
     -- endregion /pfquickcast@hostiles
+
+    -- region /pfquickcast@toteheal
+
+    local function deduceIntendedTarget_forFriendlyTargetOfTheEnemy()
+
+        local canSkipEnemyCheck = false
+
+        local mouseFrame = GetMouseFocus()
+        local mouseFrameUnit = mouseFrame.label and mouseFrame.id
+                and (mouseFrame.label .. mouseFrame.id)
+                or nil
+        if mouseFrameUnit then
+
+            if not UnitExists(mouseFrameUnit) --                  unit-frames mouse-hovering   
+                    or UnitIsFriend(_player, mouseFrameUnit) --   we check that the mouse-hover unit-frame is alive and hostile
+                    or UnitIsDead(mouseFrameUnit) then --         if its not then we guard close
+                return nil, false
+            end
+
+            canSkipEnemyCheck = true
+            TargetUnit(mouseFrameUnit)
+
+        elseif UnitExists(_mouseover) then
+
+            if UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a hostile toon in the game world?
+                    or UnitIsDead(_mouseover) then -- we check if its hostile and alive   if its not we guard close
+                return nil, false
+            end
+
+            canSkipEnemyCheck = true
+            TargetUnit(_mouseover)
+        end
+
+        if (canSkipEnemyCheck or not UnitIsFriend(_player, _target))
+                and UnitCanAssist(_player, _target_of_target)
+                and not UnitIsDead(_target_of_target) then
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
+            if unitAsTeamUnit then
+                return unitAsTeamUnit, false
+            end
+
+            return _target_of_target, true -- free world pvp situations without raid
+        end
+
+        return nil, false -- no valid target found
+    end
+
+    _G.SLASH_PFQUICKCAST_TOTE_HEAL1 = "/pfquickcast@toteheal"
+    _G.SLASH_PFQUICKCAST_TOTE_HEAL2 = "/pfquickcast:toteheal"
+    _G.SLASH_PFQUICKCAST_TOTE_HEAL3 = "/pfquickcast.toteheal"
+    _G.SLASH_PFQUICKCAST_TOTE_HEAL4 = "/pfquickcast_toteheal"
+    _G.SLASH_PFQUICKCAST_TOTE_HEAL5 = "/pfquickcasttoteheal"
+    function SlashCmdList.PFQUICKCAST_TOTE_HEAL(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forFriendlyTargetOfTheEnemy()
+        if proper_target == nil then
+            return nil
+        end
+
+        return setTargetIfNeededAndCast(
+                pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround
+        )
+    end
+
+    -- endregion /pfquickcast@toteheal
 end)
