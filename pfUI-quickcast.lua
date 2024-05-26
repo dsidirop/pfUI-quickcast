@@ -337,14 +337,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@heal and :self
     
-    -- region /pfquickcast@friendlies
-
-    _G.SLASH_PFQUICKCAST_FRIENDLIES1 = "/pfquickcast@friendlies"
-    _G.SLASH_PFQUICKCAST_FRIENDLIES2 = "/pfquickcast:friendlies"
-    _G.SLASH_PFQUICKCAST_FRIENDLIES3 = "/pfquickcast.friendlies"
-    _G.SLASH_PFQUICKCAST_FRIENDLIES4 = "/pfquickcast_friendlies"
-    _G.SLASH_PFQUICKCAST_FRIENDLIES5 = "/pfquickcastfriendlies"
-    function SlashCmdList.PFQUICKCAST_FRIENDLIES(spellsString)
+    -- region /pfquickcast@friends
+    
+    _G.SLASH_PFQUICKCAST_FRIENDS1 = "/pfquickcast@friends"
+    _G.SLASH_PFQUICKCAST_FRIENDS2 = "/pfquickcast:friends"
+    _G.SLASH_PFQUICKCAST_FRIENDS3 = "/pfquickcast.friends"
+    _G.SLASH_PFQUICKCAST_FRIENDS4 = "/pfquickcast_friends"
+    _G.SLASH_PFQUICKCAST_FRIENDS5 = "/pfquickcastfriends"
+    function SlashCmdList.PFQUICKCAST_FRIENDS(spellsString)
         -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
@@ -360,7 +360,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround)
     end
 
-    -- endregion /pfquickcast@friendlies
+    -- endregion /pfquickcast@friends
 
     -- region /pfquickcast@hostiles
 

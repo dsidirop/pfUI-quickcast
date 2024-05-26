@@ -99,7 +99,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   exactly as you specify them on your character.<br/>
 
 
-- `/pfquickcast@friendlies <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIENDLIES("<spell_name>")` )
+- `/pfquickcast@friends <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIENDS("<spell_name>")` )
 
   <br/>Casts spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
 
