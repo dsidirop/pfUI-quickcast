@@ -479,13 +479,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local function deduceIntendedTarget_forFriendlyTargetOfTheEnemy()
 
-        local canSkipEnemyCheck = false
+        local gotHostileCandidateFromMouseHover = false
 
         local mouseFrame = GetMouseFocus()
         local mouseFrameUnit = mouseFrame.label and mouseFrame.id
                 and (mouseFrame.label .. mouseFrame.id)
                 or nil
-        if mouseFrameUnit then
+        if mouseFrameUnit and not UnitIsUnit(mouseFrameUnit, _target) then
 
             if not UnitExists(mouseFrameUnit) --                  unit-frames mouse-hovering   
                     or UnitIsFriend(_player, mouseFrameUnit) --   we check that the mouse-hover unit-frame is alive and hostile
@@ -493,21 +493,21 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return nil, false
             end
 
-            canSkipEnemyCheck = true
+            gotHostileCandidateFromMouseHover = true
             TargetUnit(mouseFrameUnit)
 
-        elseif UnitExists(_mouseover) then
+        elseif UnitExists(_mouseover) and not UnitIsUnit(_mouseover, _target) then
 
             if UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a hostile toon in the game world?
                     or UnitIsDead(_mouseover) then -- we check if its hostile and alive   if its not we guard close
                 return nil, false
             end
 
-            canSkipEnemyCheck = true
+            gotHostileCandidateFromMouseHover = true
             TargetUnit(_mouseover)
         end
 
-        if (canSkipEnemyCheck or not UnitIsFriend(_player, _target))
+        if (gotHostileCandidateFromMouseHover or not UnitIsFriend(_player, _target))
                 and UnitCanAssist(_player, _target_of_target)
                 and not UnitIsDead(_target_of_target) then
             local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
@@ -516,6 +516,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
 
             return _target_of_target, true -- free world pvp situations without raid
+        end
+        
+        if gotHostileCandidateFromMouseHover then
+            TargetLastTarget()
         end
 
         return nil, false -- no valid target found
