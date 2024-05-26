@@ -69,14 +69,29 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   <br/>- If no suitable target is found in the above cases, the spell will **not** be cast even if you have AutoSelfCast=true in your CVars. This behaviour is by design
   the exact opposite to what '/pfcast' does, so that you won't accidentally heal yourself when you meant to heal someone else thus wasting both mana and precious time in a raid context.
-
-  <br/>- Note that you can in fact specify multiple healing spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be tried to be cast and so on.
+  
+  <br/>- Note that you can in fact specify multiple healing spells in a single macro. If the first spell is not castable due to cooldown or because you haven't picked it in your talent
+  tree, the next one will be tried to be cast and so on:
   
   <br/>A typical use-case of this feature is with the Paladin's 'Holy Shock' talent:
 
   ```lua
-  /pfquickcast@heal Holy Shock, Flash of Light --                         if you have the 'Holy Shock' talent in your talent build and its off  
+  /pfquickcast@heal Holy Shock, Flash of Light --                         if you have the 'Holy Shock' talent in your talent build and its off
+  
+  -- alternative syntax
   /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light") --  cooldown, it will be cast, otherwise 'Flash of Light' will be cast
+  ```
+
+  <br/>Note: The above feature can't be used as-is to fall back to lower ranks of the same spell if the first spell in the list is not castable due to low mana. If you want to achieve this
+  one way to do it is this one:
+ 
+  ```lua
+  /pfquickcast@heal Holy Shock, Flash of Light --                         if you have enough mana
+  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light --                 if you've run low on mana it fallback to one of these heals
+  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light(Rank 3) --         if you've run even lower on mana it fallback to one of these heals
+  
+  -- alternative syntax
+  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light(Rank 3)")
   ```
 
   <br/>- The healing spell that did get cast by the LUA method will be returned - if no spell was castable then 'nil' will be returned.
