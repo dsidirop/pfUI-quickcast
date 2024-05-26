@@ -64,7 +64,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local function onCast(spell, proper_target)
         if proper_target == _player then
-            onSelfCast(spell) -- faster
+            CastSpellByName(spell, 1) -- faster
             return
         end
         
@@ -123,11 +123,15 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return usedAtTimestamp == 0 -- check if the spell is off cooldown
     end
 
-    local function setTargetIfNeededAndCast(spellCastCallback, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)
+    local function setTargetIfNeededAndCast(
+            spellCastCallback,
+            spellsString,
+            proper_target,
+            use_target_toggle_workaround
+    )
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] spellsString=" .. tostring(spellsString))
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switch_back_to_previous_target_in_the_end=" .. tostring(switch_back_to_previous_target_in_the_end))
 
         if use_target_toggle_workaround then
             TargetUnit(proper_target)
@@ -158,7 +162,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
-        if use_target_toggle_workaround or switch_back_to_previous_target_in_the_end then
+        if use_target_toggle_workaround then
             -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switching back target ...")
             TargetLastTarget()
         end
@@ -229,7 +233,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return
         end
 
-        return setTargetIfNeededAndCast(onCast, spell, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+        return setTargetIfNeededAndCast(
+                onCast, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                spell,
+                proper_target,
+                use_target_toggle_workaround
+        )
     end
 
     -- endregion    /pfquickcast.any
@@ -245,31 +254,33 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local function deduceIntendedTarget_forFriendlies()
         local mouseFrame = GetMouseFocus() -- unit frames mouse hovering
         if mouseFrame.label and mouseFrame.id then
-            local unit = mouseFrame.label .. mouseFrame.id
+            
+            local unit = mouseFrame.label .. mouseFrame.id            
             if UnitCanAssist(_player, unit) then
                 local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- _mouseover -> "party1" or "raid1" etc    todo   examine if we really need this here ...
                 if unitAsTeamUnit then
                     return unitAsTeamUnit, false
                 end
 
-                return unit, true, false
+                return unit, true
             end
+
         end
         
         -- UnitExists(_mouseover) no need to check this here
         if UnitCanAssist(_player, _mouseover) then
             --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
-            return _mouseover, UnitCanAssist(_player, _target), false --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
+            return _mouseover, UnitCanAssist(_player, _target) --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
         end
 
         if UnitCanAssist(_player, _target) then
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
-            return _target, false, false
+            return _target, false
         end
 
         if UnitCanAssist(_player, _target_of_target) then
             -- at this point the current target is not a friendly unit so we try to heal the target of the target   useful fallback behaviour both when soloing and when raid healing
-            return _target_of_target, false, false
+            return _target_of_target, false
         end
 
         return nil, false -- no valid target found
@@ -291,12 +302,17 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end = deduceIntendedTarget_forFriendlies()
+        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forFriendlies()
         if proper_target == nil then
             return nil
         end
 
-        return setTargetIfNeededAndCast(pfUIQuickCast.OnHeal, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+        return setTargetIfNeededAndCast(
+                pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround
+        )
     end
 
     _G.SLASH_PFQUICKCAST_SELFHEAL1 = "/pfquickcast@selfheal"
@@ -312,7 +328,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        return setTargetIfNeededAndCast(pfUIQuickCast.OnHeal, spellsString, _player, false) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+        return setTargetIfNeededAndCast(
+                pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                spellsString,
+                _player,
+                false
+        )
     end
 
     -- endregion /pfquickcast@heal and :selfheal
@@ -430,12 +451,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end  = deduceIntendedTarget_forHostiles()
+        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forHostiles()
         if proper_target == nil then
             return nil
         end
 
-        return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)
+        return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround)
     end
 
     -- endregion /pfquickcast@hostiles
