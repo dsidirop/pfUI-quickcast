@@ -83,6 +83,34 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         _parsedSpellStringsCache[spellsString] = spellsArray
         return spellsArray
     end
+    
+    local function isSpellAvailableForPlayer(spell)
+        local _, rank = getSpellInfo_(spell)
+
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] spell='" .. tostring(spell) .. "'")
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] rank='" .. tostring(rank) .. "'")
+
+        if not rank then
+            return false -- check if the player indeed knows this spell   maybe he hasnt specced for it
+        end
+
+        local spellId, spellBookType = getSpellIndex_(spell)
+        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellIndex()] spellID='" .. tostring(spellId) .. "'")
+
+        if not spellId then
+            return false -- spell not found   shouldnt happen here but just in case
+        end
+
+        local usedAtTimestamp = GetSpellCooldown(spellId, spellBookType)
+
+        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] start='" .. tostring(start) .. "'")
+        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] duration='" .. tostring(duration) .. "'")
+        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
+        --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] modRate='" .. tostring(modRate) .. "'")
+        --print("")
+
+        return usedAtTimestamp == 0 -- check if the spell is off cooldown
+    end
 
     local function setTargetIfNeededAndCast(spellCastCallback, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)
         --print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
@@ -98,33 +126,17 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local spellsArray = parseSpellsString(spellsString)
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
-            local _, rank = getSpellInfo_(spell)
-            --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] spell='" .. tostring(spell) .. "'")
-            --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] rank='" .. tostring(rank) .. "'")
-            --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] spellID='" .. tostring(spellID) .. "'")
+            if isSpellAvailableForPlayer(spell) then
+                spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
-            if rank then -- check if the player indeed knows this spell   maybe he hasnt specced for it yet
-                local spellId, spellBookType = getSpellIndex_(spell)
-                
-                local usedAtTimestamp = GetSpellCooldown(spellId, spellBookType)
-                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] start='" .. tostring(start) .. "'")
-                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] duration='" .. tostring(duration) .. "'")
-                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
-                --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] modRate='" .. tostring(modRate) .. "'")
-                --print("")
+                if SpellIsTargeting() then
+                    -- if the spell is awaiting a target to be specified then set spell target to proper_target
+                    SpellTargetUnit(proper_target)
+                end
 
-                if usedAtTimestamp == 0 then
-                    spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
-
-                    if SpellIsTargeting() then
-                        -- if the spell is awaiting a target to be specified then set spell target to proper_target
-                        SpellTargetUnit(proper_target)
-                    end
-
-                    wasSpellCastSuccessful = not SpellIsTargeting() -- todo  test that spells on cooldown are not considered as successfully cast
-                    if wasSpellCastSuccessful then
-                        break
-                    end    
+                wasSpellCastSuccessful = not SpellIsTargeting() -- todo  test that spells on cooldown are not considered as successfully cast
+                if wasSpellCastSuccessful then
+                    break
                 end
             end
         end
@@ -231,14 +243,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
             return _mouseover, UnitCanAssist(_player, _target), false --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
         end
-
-        --if UnitExists(_mouseover) then
-        --    TargetUnit(_mouseover)
-        --    --if UnitIsFriend(_player, _target_of_target) then
-        --    --    print("** [pfUI-quickcast] [mouse-over] mouse-over attacks a friendly one")
-        --    --end
-        --    TargetLastTarget()
-        --end
 
         if UnitCanAssist(_player, _target) then
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
