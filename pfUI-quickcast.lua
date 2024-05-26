@@ -96,17 +96,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
     
     local function isSpellUsable(spell)
-        local _, rank = pfGetSpellInfo_(spell) -- cache-aware
+        local spellRawName, rank = pfGetSpellInfo_(spell) -- cache-aware
 
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] spell='" .. tostring(spell) .. "'")
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] rank='" .. tostring(rank) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spell='" .. tostring(spell) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] rank='" .. tostring(rank) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spellRawName='" .. tostring(spellRawName) .. "'")
 
         if not rank then
             return false -- check if the player indeed knows this spell   maybe he hasnt specced for it
         end
 
-        local spellId, spellBookType = pfGetSpellIndex_(spell) -- cache-aware
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellIndex()] spellID='" .. tostring(spellId) .. "'")
+        local spellId, spellBookType = pfGetSpellIndex_(spellRawName) -- cache-aware
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellID='" .. tostring(spellId) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellBookType='" .. tostring(spellBookType) .. "'")
 
         if not spellId then
             return false -- spell not found   shouldnt happen here but just in case
@@ -114,10 +116,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local usedAtTimestamp = getSpellCooldown_(spellId, spellBookType)
 
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] start='" .. tostring(start) .. "'")
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] duration='" .. tostring(duration) .. "'")
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] modRate='" .. tostring(modRate) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [getSpellCooldown_()] start='" .. tostring(start) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [getSpellCooldown_()] duration='" .. tostring(duration) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [getSpellCooldown_()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [getSpellCooldown_()] modRate='" .. tostring(modRate) .. "'")
         -- print("")
 
         return usedAtTimestamp == 0 -- check if the spell is off cooldown
