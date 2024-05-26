@@ -19,8 +19,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region helpers
 
     local pairs_ = _G.pairs
-    local getSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
-    local getSpellIndex_ = _G.pfUI.api.libspell.GetSpellIndex
+    local getSpellCooldown_ = _G.GetSpellCooldown
+    
+    local pfGetSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
+    local pfGetSpellIndex_ = _G.pfUI.api.libspell.GetSpellIndex
 
     local _player = "player"
     local _target = "target"
@@ -54,8 +56,17 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         -- try to find a valid (friendly) unitstring that can be used for SpellTargetUnit(unit) to avoid another target switch
     end
+    
+    local function onSelfCast(spell)
+        CastSpellByName(spell, 1)
+    end
 
-    local function onCast(spell)
+    local function onCast(spell, proper_target)
+        if proper_target == _player then
+            onSelfCast(spell) -- faster
+            return
+        end
+        
         -- todo   we should return false if the spell is not castable p.e. due to oom or out of range or due to cooldown (like p.e. paladin's holy shock)
         local cvar_selfcast = GetCVar("AutoSelfCast")
         if cvar_selfcast == "0" then
@@ -84,8 +95,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return spellsArray
     end
     
-    local function isSpellAvailableForPlayer(spell)
-        local _, rank = getSpellInfo_(spell)
+    local function isSpellUsable(spell)
+        local _, rank = pfGetSpellInfo_(spell) -- cache-aware
 
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] spell='" .. tostring(spell) .. "'")
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellInfo()] rank='" .. tostring(rank) .. "'")
@@ -94,14 +105,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return false -- check if the player indeed knows this spell   maybe he hasnt specced for it
         end
 
-        local spellId, spellBookType = getSpellIndex_(spell)
+        local spellId, spellBookType = pfGetSpellIndex_(spell) -- cache-aware
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [getSpellIndex()] spellID='" .. tostring(spellId) .. "'")
 
         if not spellId then
             return false -- spell not found   shouldnt happen here but just in case
         end
 
-        local usedAtTimestamp = GetSpellCooldown(spellId, spellBookType)
+        local usedAtTimestamp = getSpellCooldown_(spellId, spellBookType)
 
         --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] start='" .. tostring(start) .. "'")
         --print("** [pfUI-quickcast] [setTargetIfNeededAndCast] [GetSpellCooldown()] duration='" .. tostring(duration) .. "'")
@@ -126,8 +137,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local spellsArray = parseSpellsString(spellsString)
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
-            if isSpellAvailableForPlayer(spell) then
+            if isSpellUsable(spell) then
                 spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+
+                if proper_target == _player then -- self-casts are 99.9999% successful
+                    wasSpellCastSuccessful = true
+                    break
+                end
 
                 if SpellIsTargeting() then
                     -- if the spell is awaiting a target to be specified then set spell target to proper_target
@@ -212,7 +228,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return
         end
 
-        setTargetIfNeededAndCast(onCast, spell, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+        return setTargetIfNeededAndCast(onCast, spell, proper_target, use_target_toggle_workaround) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
     end
 
     -- endregion    /pfquickcast.any
@@ -314,10 +330,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return ""
         end
 
-        return setTargetIfNeededAndCast(onCast, spellsString, _player, false)
+        return setTargetIfNeededAndCast(onSelfCast, spellsString, _player, false)
     end
 
-    -- endregion /pfquickcast@heal and :selfheal
+    -- endregion /pfquickcast@heal and :self
     
     -- region /pfquickcast@friendlies
 
