@@ -168,7 +168,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         if not wasSpellCastSuccessful then
             -- at this point if the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
             SpellStopTargeting()
-            return ""
+            return nil
         end
 
         return spell
@@ -288,12 +288,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
-            return ""
+            return nil
         end
 
         local proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end = deduceIntendedTarget_forFriendlies()
         if proper_target == nil then
-            return ""
+            return nil
         end
 
         return setTargetIfNeededAndCast(pfUIQuickCast.OnHeal, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
@@ -309,7 +309,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
-            return ""
+            return nil
         end
 
         return setTargetIfNeededAndCast(pfUIQuickCast.OnHeal, spellsString, _player, false) -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
@@ -329,7 +329,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
-            return ""
+            return nil
         end
 
         return setTargetIfNeededAndCast(onSelfCast, spellsString, _player, false)
@@ -349,12 +349,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
-            return ""
+            return nil
         end
 
         local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forFriendlies()
         if proper_target == nil then
-            return ""
+            return nil
         end
 
         return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround)
@@ -427,12 +427,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
-            return ""
+            return nil
         end
 
         local proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end  = deduceIntendedTarget_forHostiles()
         if proper_target == nil then
-            return ""
+            return nil
         end
 
         return setTargetIfNeededAndCast(onCast, spellsString, proper_target, use_target_toggle_workaround, switch_back_to_previous_target_in_the_end)

@@ -79,7 +79,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light") --  cooldown, it will be cast, otherwise 'Flash of Light' will be cast
   ```
 
-  <br/>- The healing spell that did get cast by the LUA method will be returned - if no spell was castable then the empty string '' will be returned.
+  <br/>- The healing spell that did get cast by the LUA method will be returned - if no spell was castable then 'nil' will be returned.
 
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
