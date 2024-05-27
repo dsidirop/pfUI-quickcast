@@ -82,11 +82,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local _parsedSpellStringsCache = {}
     local function parseSpellsString(spellsString)
-        if _parsedSpellStringsCache[spellsString] then
-            return _parsedSpellStringsCache[spellsString]
+        local spellsArray = _parsedSpellStringsCache[spellsString]
+        if spellsArray ~= nil then
+            return spellsArray
         end
 
-        local spellsArray = {}
+        spellsArray = {}
         for spell in string.gfind(spellsString, "%s*([^,;]*[^,;])%s*") do
             if spell ~= "" then -- ignore empty strings
                 table.insert(spellsArray, spell)
