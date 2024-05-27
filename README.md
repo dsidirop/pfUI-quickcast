@@ -25,11 +25,11 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 - **Targeting**: The implementation of the '/pfquickcast@heal' is such that it only casts spells on **friendly** targets.<br/>
 
-  <br/>This is important for spells like 'Holy Shock' that can be used on both friendly and hostile targets. The '/pfcast' command on the contrary
-  is not aware of the target type and will cast 'Holy Shock' on the currently selected target if it's hostile prioritizing it over the friendly
+  <br/>This is important for spells like 'Holy Shock' that can be used on both friendly and enemy targets. The '/pfcast' command on the contrary
+  is not aware of the target type and will cast 'Holy Shock' on the currently selected target if it's enemy prioritizing it over the friendly
   target that you intend to heal with mouse-over. :(
 
-  <br/>If someone wants to force '/pfcast' to cast 'Holy Shock' on the friendly mouse-over target (even if a hostile target is selected), they would have to
+  <br/>If someone wants to force '/pfcast' to cast 'Holy Shock' on the friendly mouse-over target (even if a enemy target is selected), they would have to
   resort to writing a LUA wrapper-script. This sort of "LUA heartburn" is no longer necessary with the '/pfquickcast@heal' command. 
 
   <br/>This is just one of the many issues plaguing the original '/pfcast' command that '/pfquickcast@heal' fixes right ouf of the box.
@@ -130,15 +130,15 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 - `/pfquickcast@healtote <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL_TOTE("<spell_name>")` )
 
-  <br/>Casts heals to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over a **hostile** unit in which case it will find the friendly target that it's attacking
+  <br/>Casts heals to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over a **enemy** unit in which case it will find the friendly target that it's attacking
   to heal it.
 
-  <br/>- Note that this flavour will automatically **change** your current target to the hostile unit you're mouse-hovering over. Use with caution.
+  <br/>- Note that this flavour will automatically **change** your current target to the enemy unit you're mouse-hovering over. Use with caution.
 
   <br/>- This flavour is meant to be used mainly when healing boss-fights that necessitate tank swaps, in which case you want your heals to land automatically on the tank that the boss is currently
   attacking at any given moment.<br/>
 
-  <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a hostile one.<br/>
+  <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a enemy one.<br/>
 
   ```                                                        
   -- you can bind this macro to your scroll-wheel-up/down for effective spam healing via mouse-hover
@@ -166,57 +166,59 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   exactly as you specify them on your character.<br/><br/>
 
 
-- `/pfquickcast@friends <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIENDS("<spell_name>")` )
+- `/pfquickcast@friend <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIEND("<spell_name>")` )
 
   <br/>Casts spells on **friendly** targets p.e. on pfUI frames via mouse-hover.
 
-  <br/>Use this flavour for **friendly** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).
+  <br/>Use this flavour for **friendly** spells or generic spells that can be used on both friendly and enemy targets (p.e. Paladin's Holy Shock).
 
   <br/>Note that (normally) this flavour is not interceptable by heal-auto-ranking addons and should be used for spells that are meant to be cast
   exactly as you specify them on friendly targets.<br/><br/>
 
-- `/pfquickcast@hostiletbf <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILE_TBF("<spell_name>")` )
 
-  <br/>**@hostiletbf** stands for **hostile-targeted-by-friend**, and it's the inverse of @healtote in the sense that you now mouse-hover over a
-  **friendly** unit and the spell will be cast on the **hostile** target that your friend is attacking. Like @healtote this flavour will automatically
+- `/pfquickcast@enemy <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ENEMY("<spell_name>")` )
+
+  <br/>Casts spells on **enemy / neutral** targets p.e. via mouse-hover directly on the NPCs or in pfUI unit-frames.
+
+  <br/>- You can in fact specify multiple spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
+
+  <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and enemy targets (p.e. Paladin's Holy Shock).<br/><br/>
+
+
+- `/pfquickcast@enemytbf <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ENEMY_TBF("<spell_name>")` )
+
+  <br/>**@enemytbf** stands for **enemy-targeted-by-friend**, and it's the inverse of @healtote in the sense that you now mouse-hover over a
+  **friendly** unit and the spell will be cast on the **enemy** target that your friend is attacking. Like @healtote this flavour will automatically
   change your current target to the friendly unit you're mouse-hovering over. So use it with caution.
 
   <br/>You can use this flavor in a specialized macro to:
 
   - Always track & attack the tank's current target.<br/>
-  - It's also useful in **multi-boxing scenarios** where you want your follower-chars to always attack the target of your leading char.<br/><br/> 
+  - It's also useful in **multi-boxing scenarios** where you want your follower-chars to always attack the target of your leading char.<br/><br/>
 
-  You can even combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a hostile one.<br/>
+  You can even combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a enemy one.<br/>
 
   ```
-  /pfquickcast@hostiles   Frostbolt   -- if you mouse-hover over a hostile target
-  /pfquickcast@hostiletbf Frostbolt   -- if you mouse-hover over a friendly target your spells will be sent to the hostile target that your friend is attacking
+  /pfquickcast@enemy    Frostbolt   -- if you mouse-hover over a enemy target or if you dont mouse-hover anything but you have an enemy already selected
+  /pfquickcast@enemytbf Frostbolt   -- if you mouse-hover over a friendly target your spells will be sent to the enemy target that your friend is attacking
   ```
 
   ```lua
-  SlashCmdList.PFQUICKCAST_HOSTILES("Frostbolt")
-  SlashCmdList.PFQUICKCAST_HOSTILE_TBF("Frostbolt")
+  SlashCmdList.PFQUICKCAST_ENEMY("Frostbolt")
+  SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")
   ```
 
   <br/>Or as a one-liner scriptlet:
 
   ```
-  /script SlashCmdList.PFQUICKCAST_HOSTILES("Frostbolt"); SlashCmdList.PFQUICKCAST_HOSTILE_TBF("Frostbolt")
+  /script SlashCmdList.PFQUICKCAST_ENEMY("Frostbolt"); SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")
   ```
   <br/>
-
-- `/pfquickcast@hostiles <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILES("<spell_name>")` )
-
-  <br/>Casts spells on **hostile / neutral** targets p.e. via mouse-hover directly on the NPCs or in pfUI unit-frames.
-
-  <br/>- You can in fact specify multiple spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
-
-  <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).<br/><br/>
 
 
 - `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 
-  <br/>Casts spells to any target (friendly, neutral or hostile) p.e. on pfUI frames via mouse-hover.<br/>
+  <br/>Casts spells to any target (friendly, neutral or enemy) p.e. on pfUI frames via mouse-hover.<br/>
 
 
 

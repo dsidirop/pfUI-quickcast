@@ -145,7 +145,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         _pfui_ui_mouseover.unit = proper_target
 
         local spellsArray = parseSpellsString(spellsString)
-        local spellThatQualified = nil
+        local spellThatQualified
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
             if isSpellUsable(spell) then
@@ -261,7 +261,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return onCast(spell, proper_target)
     end
 
-    local function deduceIntendedTarget_forFriendlies()
+    local function deduceIntendedTarget_forFriendlySpells()
         local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
         if mouseFrame.label and mouseFrame.id then
             
@@ -311,7 +311,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forFriendlies()
+        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forFriendlySpells()
         if proper_target == nil then
             return nil
         end
@@ -365,21 +365,21 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@heal and :self
     
-    -- region /pfquickcast@friends
+    -- region /pfquickcast@friend
     
-    _G.SLASH_PFQUICKCAST_FRIENDS1 = "/pfquickcast@friends"
-    _G.SLASH_PFQUICKCAST_FRIENDS2 = "/pfquickcast:friends"
-    _G.SLASH_PFQUICKCAST_FRIENDS3 = "/pfquickcast.friends"
-    _G.SLASH_PFQUICKCAST_FRIENDS4 = "/pfquickcast_friends"
-    _G.SLASH_PFQUICKCAST_FRIENDS5 = "/pfquickcastfriends"
-    function SlashCmdList.PFQUICKCAST_FRIENDS(spellsString)
+    _G.SLASH_PFQUICKCAST_FRIEND1 = "/pfquickcast@friend"
+    _G.SLASH_PFQUICKCAST_FRIEND2 = "/pfquickcast:friend"
+    _G.SLASH_PFQUICKCAST_FRIEND3 = "/pfquickcast.friend"
+    _G.SLASH_PFQUICKCAST_FRIEND4 = "/pfquickcast_friend"
+    _G.SLASH_PFQUICKCAST_FRIEND5 = "/pfquickcastfriend"
+    function SlashCmdList.PFQUICKCAST_FRIEND(spellsString)
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forFriendlies()
+        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forFriendlySpells()
         if proper_target == nil then
             return nil
         end
@@ -392,57 +392,57 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         )
     end
 
-    -- endregion /pfquickcast@friends
+    -- endregion /pfquickcast@friend
 
-    -- region /pfquickcast@hostiles
+    -- region /pfquickcast@enemy
 
-    local function deduceIntendedTarget_forHostiles()
+    local function deduceIntendedTarget_forOffensiveSpells()
         -- print("********")
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 000")
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 000")
         
         local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
         if mouseFrame.label and mouseFrame.id then
             local unit = mouseFrame.label .. mouseFrame.id
 
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 010 hostile unit=" .. tostring(unit))
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 010 enemy unit=" .. tostring(unit))
 
             if UnitExists(unit) and not UnitIsFriend(_player, unit) and not UnitIsUnit(_target, unit) then
-                -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not hostile ones
+                -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not enemy ones
                 
-                -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 020 hostile unit=" .. tostring(unit) .. ", unitAsTeamUnit=" .. tostring(unitAsTeamUnit))
+                -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 020 enemy unit=" .. tostring(unit) .. ", unitAsTeamUnit=" .. tostring(unitAsTeamUnit))
 
                 return unit, false
             end
 
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 030")
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 030")
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040 UnitExists(_mouseover)="..tostring(UnitExists(_mouseover)))
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 040 not UnitIsFriend(_player, _mouseover)="..tostring(not UnitIsFriend(_player, _mouseover)))
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 UnitExists(_mouseover)="..tostring(UnitExists(_mouseover)))
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 not UnitIsFriend(_player, _mouseover)="..tostring(not UnitIsFriend(_player, _mouseover)))
         if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) and not UnitIsUnit(_target, _mouseover) then
-            --00 mouse hovering directly over a hostile toon in the game-world?
+            --00 mouse hovering directly over a enemy toon in the game-world?
 
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 050    UnitName(_mouseover)='" .. UnitName(_mouseover) .. "'")
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 050    UnitName(_mouseover)='" .. UnitName(_mouseover) .. "'")
             
             return _mouseover, true
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 060")
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 060")
         if UnitExists(_target) and not UnitIsFriend(_player, _target) then
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 070")
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 070")
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
             return _target, false
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 080")
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 080")
         if not UnitIsFriend(_player, _target_of_target) then
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 090")
+            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 090")
             
-            -- at this point the current target is a friendly unit so we try to spell-cast on its own hostile target   useful fallback behaviour both when soloing and when raid healing
+            -- at this point the current target is a friendly unit so we try to spell-cast on its own enemy target   useful fallback behaviour both when soloing and when raid healing
             return _target_of_target, false
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forHostiles] 100")
+        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 100")
 
         return nil, false -- no valid target found
 
@@ -450,12 +450,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         --     since noone is using this kind of mousehover to heal himself
     end
 
-    _G.SLASH_PFQUICKCAST_HOSTILES1 = "/pfquickcast@hostiles"
-    _G.SLASH_PFQUICKCAST_HOSTILES2 = "/pfquickcast:hostiles"
-    _G.SLASH_PFQUICKCAST_HOSTILES3 = "/pfquickcast.hostiles"
-    _G.SLASH_PFQUICKCAST_HOSTILES4 = "/pfquickcast_hostiles"
-    _G.SLASH_PFQUICKCAST_HOSTILES5 = "/pfquickcasthostiles"
-    function SlashCmdList.PFQUICKCAST_HOSTILES(spellsString)
+    _G.SLASH_PFQUICKCAST_ENEMY1 = "/pfquickcast@enemy"
+    _G.SLASH_PFQUICKCAST_ENEMY2 = "/pfquickcast:enemy"
+    _G.SLASH_PFQUICKCAST_ENEMY3 = "/pfquickcast.enemy"
+    _G.SLASH_PFQUICKCAST_ENEMY4 = "/pfquickcast_enemy"
+    _G.SLASH_PFQUICKCAST_ENEMY5 = "/pfquickcastenemy"
+    function SlashCmdList.PFQUICKCAST_ENEMY(spellsString)
         -- we export this function to the global scope so as to make it accessible to users lua scripts
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
@@ -463,7 +463,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forHostiles()
+        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forOffensiveSpells()
         if proper_target == nil then
             return nil
         end
@@ -476,13 +476,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         )
     end
 
-    -- endregion /pfquickcast@hostiles
+    -- endregion /pfquickcast@enemy
 
     -- region /pfquickcast@healtote
 
     local function deduceIntendedTarget_forFriendlyTargetOfTheEnemy()
 
-        local gotHostileCandidateFromMouseHover = false
+        local gotEnemyCandidateFromMouseHover = false
 
         local mouseFrame = GetMouseFocus()
         local mouseFrameUnit = mouseFrame.label and mouseFrame.id
@@ -491,26 +491,26 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         if mouseFrameUnit and not UnitIsUnit(mouseFrameUnit, _target) then
 
             if not UnitExists(mouseFrameUnit) --                  unit-frames mouse-hovering   
-                    or UnitIsFriend(_player, mouseFrameUnit) --   we check that the mouse-hover unit-frame is alive and hostile
+                    or UnitIsFriend(_player, mouseFrameUnit) --   we check that the mouse-hover unit-frame is alive and enemy
                     or UnitIsDead(mouseFrameUnit) then --         if its not then we guard close
                 return nil, false
             end
 
-            gotHostileCandidateFromMouseHover = true
+            gotEnemyCandidateFromMouseHover = true
             TargetUnit(mouseFrameUnit)
 
         elseif UnitExists(_mouseover) and not UnitIsUnit(_mouseover, _target) then
 
-            if UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a hostile toon in the game world?
-                    or UnitIsDead(_mouseover) then -- we check if its hostile and alive   if its not we guard close
+            if UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a enemy toon in the game world?
+                    or UnitIsDead(_mouseover) then -- we check if its enemy and alive   if its not we guard close
                 return nil, false
             end
 
-            gotHostileCandidateFromMouseHover = true
+            gotEnemyCandidateFromMouseHover = true
             TargetUnit(_mouseover)
         end
 
-        if (gotHostileCandidateFromMouseHover or not UnitIsFriend(_player, _target))
+        if (gotEnemyCandidateFromMouseHover or not UnitIsFriend(_player, _target))
                 and UnitCanAssist(_player, _target_of_target)
                 and not UnitIsDead(_target_of_target) then
             local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
@@ -521,7 +521,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return _target_of_target, true -- free world pvp situations without raid
         end
         
-        if gotHostileCandidateFromMouseHover then
+        if gotEnemyCandidateFromMouseHover then
             TargetLastTarget()
         end
 
@@ -555,9 +555,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@healtote
 
-    -- region /pfquickcast@hostiletbf
+    -- region /pfquickcast@enemytbf
 
-    local function deduceIntendedTarget_forHostileTargetedByFriend()
+    local function deduceIntendedTarget_forEnemyTargetedByFriend()
 
         local gotFriendCandidateFromMouseHover = false
 
@@ -578,8 +578,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         elseif UnitExists(_mouseover) and not UnitIsUnit(_mouseover, _target) then
 
-            if not UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a hostile toon in the game world?
-                    or UnitIsDead(_mouseover) then -- we check if its hostile and alive   if its not we guard close
+            if not UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a enemy toon in the game world?
+                    or UnitIsDead(_mouseover) then --     we check if its enemy and alive   if its not we guard close
                 return nil, false
             end
 
@@ -605,19 +605,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return nil, false -- no valid target found
     end
 
-    _G.SLASH_PFQUICKCAST_HOSTILE_TBF1 = "/pfquickcast@hostiletbf"
-    _G.SLASH_PFQUICKCAST_HOSTILE_TBF2 = "/pfquickcast:hostiletbf"
-    _G.SLASH_PFQUICKCAST_HOSTILE_TBF3 = "/pfquickcast.hostiletbf"
-    _G.SLASH_PFQUICKCAST_HOSTILE_TBF4 = "/pfquickcast_hostiletbf"
-    _G.SLASH_PFQUICKCAST_HOSTILE_TBF5 = "/pfquickcasthostiletbf"
-    function SlashCmdList.PFQUICKCAST_HOSTILE_TBF(spellsString)
+    _G.SLASH_PFQUICKCAST_ENEMY_TBF1 = "/pfquickcast@enemytbf"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBF2 = "/pfquickcast:enemytbf"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBF3 = "/pfquickcast.enemytbf"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBF4 = "/pfquickcast_enemytbf"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBF5 = "/pfquickcastenemytbf"
+    function SlashCmdList.PFQUICKCAST_ENEMY_TBF(spellsString)
         -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
 
         if not spellsString then
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forHostileTargetedByFriend()
+        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forEnemyTargetedByFriend()
         if proper_target == nil then
             return nil
         end
@@ -630,8 +630,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         )
     end
 
-    -- endregion /pfquickcast@hostiletbf
-
-
+    -- endregion /pfquickcast@enemytbf
 
 end)
