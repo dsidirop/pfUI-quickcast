@@ -42,7 +42,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   This is how simply '/pfquickcast@heal' is meant to be used with heal auto-ranking addons:<br/>
 
-  ```lua
+  ```
    /pfquickcast@heal Holy Light   -- the heal auto-ranking addon will intercept this call and cast the most appropriate rank of 'Holy Light' based on the target's health
   ```
 
@@ -51,7 +51,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   Just for the sake of comparison, here's how '/pfcast' is meant to be used with heal auto-ranking addons:<br/>
 
-  ```lua
+  ```
    /pfcast YourPreferredHealAutoRankingAddon:Cast("Holy Light")
   ```
   
@@ -76,22 +76,40 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   
   <br/>A typical use-case of this feature is with the Paladin's 'Holy Shock' talent:
 
-  ```lua
-  /pfquickcast@heal Holy Shock, Flash of Light --                         if you have the 'Holy Shock' talent in your talent build and its off
+  ```
+  /pfquickcast@heal Holy Shock, Flash of Light      -- if you have the 'Holy Shock' talent in your talent build and it is off cooldown, it will be cast, otherwise 'Flash of Light' will be cast
   
-  -- alternative syntax
-  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light") --  cooldown, it will be cast, otherwise 'Flash of Light' will be cast
+  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light")     -- equivalent LUA call
+  ```
+  
+  <br/>You can also use the ';' character as a separator:
+    
+  ```
+  /pfquickcast@heal Holy Shock; Flash of Light;
+  
+  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock; Flash of Light;") -- equivalent LUA call
   ```
 
   <br/>Note: The above feature can't be used as-is to fall back to lower ranks of the same spell if the first spell in the list is not castable due to low mana. If you want to achieve this
   one way to do it is this one:
  
-  ```lua
-  /pfquickcast@heal Holy Shock, Flash of Light --                         if you have enough mana
-  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light --                 if you've run low on mana it will fall through to one of these heals
+  ```
+  /pfquickcast@heal Holy Shock,         Flash of Light --                 primary heal 
+  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light --                 if you've run low on mana and none of the previous spells can be cast it will fall through to one of these heals
   /pfquickcast@heal Holy Shock(Rank 1), Flash of Light(Rank 3) --         if you've run even lower on mana it will fall through to one of these heals
-  
-  -- alternative syntax
+  ```
+
+  <br/>Equivalent LUA script:
+
+  ```lua
+  SlashCmdList.PFQUICKCAST_HEAL("Holy Shock,         Flash of Light        ")
+  SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light        ")
+  SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light(Rank 3)")
+  ```
+
+  <br/>Or as a one-liner:
+
+  ```
   /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light(Rank 3)")
   ```
 
@@ -122,22 +140,30 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a hostile one.<br/>
 
-  ```lua                                                        
+  ```                                                        
   -- you can bind this macro to your scroll-wheel-up/down for effective spam healing via mouse-hover
 
-  /pfquickcast@heal       Holy Shock, Flash of Light --         if you mouse-hover over friendly units
-  /pfquickcast@healtote   Holy Shock, Flash of Light --         if you mouse-hover over hostile units you will heal the friendly targets they're attacking (if any)
+  /pfquickcast@heal       Holy Shock, Flash of Light
+  /pfquickcast@healtote   Holy Shock, Flash of Light
+  ```
   
-  -- alternative syntax
+  ```lua
+  SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light")
+  SlashCmdList.PFQUICKCAST_HEAL_TOTE("Holy Shock, Flash of Light")
+  ```
+  <br/>Or as a one-liner:
+
+  ```
   /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL_TOTE("Holy Shock, Flash of Light");
   ```
+  <br/>
 
 - `/pfquickcast@self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
 
   <br/>Casts spells on your **character** no matter what.
 
   <br/>Note that (normally) this flavour is not interceptable by heal-auto-ranking addons and should be used for spells that are meant to be cast
-  exactly as you specify them on your character.<br/>
+  exactly as you specify them on your character.<br/><br/>
 
 
 - `/pfquickcast@friends <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIENDS("<spell_name>")` )
@@ -147,8 +173,37 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>Use this flavour for **friendly** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).
 
   <br/>Note that (normally) this flavour is not interceptable by heal-auto-ranking addons and should be used for spells that are meant to be cast
-  exactly as you specify them on friendly targets.<br/>
+  exactly as you specify them on friendly targets.<br/><br/>
 
+- `/pfquickcast@hostiletbf <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILE_TBF("<spell_name>")` )
+
+  <br/>**@hostiletbf** stands for **hostile-targeted-by-friend**, and it's the inverse of @healtote in the sense that you now mouse-hover over a
+  **friendly** unit and the spell will be cast on the **hostile** target that your friend is attacking. Like @healtote this flavour will automatically
+  change your current target to the friendly unit you're mouse-hovering over. So use it with caution.
+
+  <br/>You can use this flavor in a specialized macro to:
+
+  - Always track & attack the tank's current target.<br/>
+  - It's also useful in **multi-boxing scenarios** where you want your follower-chars to always attack the target of your leading char.<br/><br/> 
+
+  You can even combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a hostile one.<br/>
+
+  ```
+  /pfquickcast@hostiles   Frostbolt   -- if you mouse-hover over a hostile target
+  /pfquickcast@hostiletbf Frostbolt   -- if you mouse-hover over a friendly target your spells will be sent to the hostile target that your friend is attacking
+  ```
+
+  ```lua
+  SlashCmdList.PFQUICKCAST_HOSTILES("Frostbolt")
+  SlashCmdList.PFQUICKCAST_HOSTILE_TBF("Frostbolt")
+  ```
+
+  <br/>Or as a one-liner scriptlet:
+
+  ```
+  /script SlashCmdList.PFQUICKCAST_HOSTILES("Frostbolt"); SlashCmdList.PFQUICKCAST_HOSTILE_TBF("Frostbolt")
+  ```
+  <br/>
 
 - `/pfquickcast@hostiles <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HOSTILES("<spell_name>")` )
 
@@ -156,7 +211,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   <br/>- You can in fact specify multiple spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
 
-  <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).<br/>
+  <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and hostile targets (p.e. Paladin's Holy Shock).<br/><br/>
 
 
 - `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )

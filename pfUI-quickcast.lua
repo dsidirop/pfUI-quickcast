@@ -88,7 +88,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local spellsArray = {}
         for spell in string.gfind(spellsString, "%s*([^,;]*[^,;])%s*") do
-            table.insert(spellsArray, spell)
+            if spell ~= "" then -- ignore empty strings
+                table.insert(spellsArray, spell)
+            end
         end
 
         _parsedSpellStringsCache[spellsString] = spellsArray
@@ -551,4 +553,84 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     -- endregion /pfquickcast@healtote
+
+    -- region /pfquickcast@hostiletbf
+
+    local function deduceIntendedTarget_forHostileTargetedByFriend()
+
+        local gotFriendCandidateFromMouseHover = false
+
+        local mouseFrame = GetMouseFocus()
+        local mouseFrameUnit = mouseFrame.label and mouseFrame.id
+                and (mouseFrame.label .. mouseFrame.id)
+                or nil
+        if mouseFrameUnit and not UnitIsUnit(mouseFrameUnit, _target) then
+
+            if not UnitExists(mouseFrameUnit) -- unit-frames mouse-hovering   
+                    or not UnitIsFriend(_player, mouseFrameUnit)
+                    or UnitIsDead(mouseFrameUnit) then
+                return nil, false
+            end
+
+            gotFriendCandidateFromMouseHover = true
+            TargetUnit(mouseFrameUnit)
+
+        elseif UnitExists(_mouseover) and not UnitIsUnit(_mouseover, _target) then
+
+            if not UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a hostile toon in the game world?
+                    or UnitIsDead(_mouseover) then -- we check if its hostile and alive   if its not we guard close
+                return nil, false
+            end
+
+            gotFriendCandidateFromMouseHover = true
+            TargetUnit(_mouseover)
+        end
+
+        if (gotFriendCandidateFromMouseHover or UnitIsFriend(_player, _target))
+                and not UnitIsFriend(_player, _target_of_target)
+                and not UnitIsDead(_target_of_target) then
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
+            if unitAsTeamUnit then
+                return unitAsTeamUnit, false
+            end
+
+            return _target_of_target, true -- free world pvp situations without raid
+        end
+
+        if gotFriendCandidateFromMouseHover then
+            TargetLastTarget()
+        end
+
+        return nil, false -- no valid target found
+    end
+
+    _G.SLASH_PFQUICKCAST_HOSTILE_TBF1 = "/pfquickcast@hostiletbf"
+    _G.SLASH_PFQUICKCAST_HOSTILE_TBF2 = "/pfquickcast:hostiletbf"
+    _G.SLASH_PFQUICKCAST_HOSTILE_TBF3 = "/pfquickcast.hostiletbf"
+    _G.SLASH_PFQUICKCAST_HOSTILE_TBF4 = "/pfquickcast_hostiletbf"
+    _G.SLASH_PFQUICKCAST_HOSTILE_TBF5 = "/pfquickcasthostiletbf"
+    function SlashCmdList.PFQUICKCAST_HOSTILE_TBF(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forHostileTargetedByFriend()
+        if proper_target == nil then
+            return nil
+        end
+
+        return setTargetIfNeededAndCast(
+                onCast, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround
+        )
+    end
+
+    -- endregion /pfquickcast@hostiletbf
+
+
+
 end)
