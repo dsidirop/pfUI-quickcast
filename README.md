@@ -35,18 +35,19 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>This is just one of the many issues plaguing the original '/pfcast' command that '/pfquickcast@heal' fixes right ouf of the box.
 
 
-- **Simplicity of Integration with Heal-Auto Ranking Addons**: The '/pfquickcast@heal' command works seamlessly and transparently with heal-auto-ranking addons that support it.<br/><br/>
+- **Simplicity of Integration with Heal-Auto Ranking Addons**: The '/pfquickcast@heal' command works seamlessly and transparently with heal-auto-ranking
+  addons that support it.<br/><br/>
 
   Unless you want to do something very advanced using your own custom LUA macro-script, there's absolutely no need to write counter-intuitive LUA scripts.<br/><br/>
 
-  This is how simply '/pfcast' is meant to be used with heal auto-ranking addons:<br/>
+  This is how simply '/pfquickcast@heal' is meant to be used with heal auto-ranking addons:<br/>
 
   ```lua
    /pfquickcast@heal Holy Light   -- the heal auto-ranking addon will intercept this call and cast the most appropriate rank of 'Holy Light' based on the target's health
   ```
 
-  With the '/pfquickcast@heal' approach if you decide to switch over to another heal-auto-ranking addon you don't have to edit any of your macros - just switch over to your new heal-auto-ranking
-  addon and everything will work transparently (provided of course that your new heal-auto-ranking addon supports /pfquickcast@heal indeed).<br/><br/>
+  With the '/pfquickcast@heal' approach if you decide to switch over to another heal-auto-ranking addon you don't have to edit any of your macros - simply switch
+  over to your new heal-auto-ranking addon and everything will work transparently (provided of course that your new heal-auto-ranking addon supports /pfquickcast@heal indeed).<br/><br/>
 
   Just for the sake of comparison, here's how '/pfcast' is meant to be used with heal auto-ranking addons:<br/>
 
@@ -54,8 +55,8 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
    /pfcast YourPreferredHealAutoRankingAddon:Cast("Holy Light")
   ```
   
-  Apart from an alienating syntax, this approach means that if you decide to switch over to another heal-auto-ranking addon **you're forced to manually edit all your macros** to reflect the new
-  heal-auto-ranking addon's API.<br/><br/>
+  Apart from an alienating syntax, this approach means that if you decide to switch over to another heal-auto-ranking addon **you're forced into "LUA heartburn" by having to manually
+  edit all your macros** to reflect the new heal-auto-ranking addon's API.<br/><br/>
 
 ## 🕮  Basic Usage:
 
@@ -87,14 +88,17 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
  
   ```lua
   /pfquickcast@heal Holy Shock, Flash of Light --                         if you have enough mana
-  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light --                 if you've run low on mana it fallback to one of these heals
-  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light(Rank 3) --         if you've run even lower on mana it fallback to one of these heals
+  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light --                 if you've run low on mana it will fall through to one of these heals
+  /pfquickcast@heal Holy Shock(Rank 1), Flash of Light(Rank 3) --         if you've run even lower on mana it will fall through to one of these heals
   
   -- alternative syntax
   /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light"); SlashCmdList.PFQUICKCAST_HEAL("Holy Shock(Rank 1), Flash of Light(Rank 3)")
   ```
 
-  <br/>- The healing spell that did get cast by the LUA method will be returned - if no spell was castable then 'nil' will be returned.
+  <br/>- The first spell in the comma separated list of spells, that was valid and not on CD will be return by the LUA call and if no spell met those criteria then 'nil' will be returned.
+  
+  <br/>**Do bear in mind however that just because a spell is returned it doesn't necessarily mean that it was cast successfully. If for example you run too low on mana then the spell will not be cast even though it
+  will be returned by the method. This is a known shortcoming but in practice you can work around it in the manner shown above to fall through to other spells.**<br/> 
 
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
