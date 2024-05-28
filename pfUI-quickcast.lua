@@ -198,7 +198,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local unit = _mouseover
         if not UnitExists(unit) then
             local frame = GetMouseFocus()
-            if frame.label and frame.id then
+            if frame and frame.label and frame.id then
                 unit = frame.label .. frame.id
             elseif UnitExists(_target) then
                 unit = _target
@@ -263,7 +263,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local function deduceIntendedTarget_forFriendlySpells()
         local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
-        if mouseFrame.label and mouseFrame.id then
+        if mouseFrame and mouseFrame.label and mouseFrame.id then
             
             local unit = mouseFrame.label .. mouseFrame.id            
             if UnitCanAssist(_player, unit) then
@@ -401,7 +401,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 000")
         
         local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
-        if mouseFrame.label and mouseFrame.id then
+        if mouseFrame and mouseFrame.label and mouseFrame.id then
             local unit = mouseFrame.label .. mouseFrame.id
 
             -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 010 enemy unit=" .. tostring(unit))
@@ -485,7 +485,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local gotEnemyCandidateFromMouseHover = false
 
         local mouseFrame = GetMouseFocus()
-        local mouseFrameUnit = mouseFrame.label and mouseFrame.id
+        local mouseFrameUnit = mouseFrame and mouseFrame.label and mouseFrame.id
                 and (mouseFrame.label .. mouseFrame.id)
                 or nil
         if mouseFrameUnit and not UnitIsUnit(mouseFrameUnit, _target) then
@@ -562,7 +562,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local gotFriendCandidateFromMouseHover = false
 
         local mouseFrame = GetMouseFocus()
-        local mouseFrameUnit = mouseFrame.label and mouseFrame.id
+        local mouseFrameUnit = mouseFrame and mouseFrame.label and mouseFrame.id
                 and (mouseFrame.label .. mouseFrame.id)
                 or nil
         if mouseFrameUnit and not UnitIsUnit(mouseFrameUnit, _target) then
