@@ -326,7 +326,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
         
         -- UnitExists(_mouseover) no need to check this here
-        if UnitCanAssist(_player, _mouseover) then
+        if UnitCanAssist(_player, _mouseover) and not UnitIsDeadOrGhost(_mouseover) then
             --00 mouse hovering directly over friendly player-toons in the game-world?
 
             if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster 
@@ -477,10 +477,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 UnitExists(_mouseover)="..tostring(UnitExists(_mouseover)))
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 not UnitIsFriend(_player, _mouseover)="..tostring(not UnitIsFriend(_player, _mouseover)))
-        if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) and not UnitIsUnit(_target, _mouseover) then
+        if UnitExists(_mouseover)
+                and not UnitIsFriend(_player, _mouseover)
+                and not UnitIsUnit(_mouseover, _target)
+                and not UnitIsDeadOrGhost(_mouseover) then
             --00 mouse hovering directly over an enemy toon in the game-world?
 
-            if UnitIsFriend(_player, _target) then -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
+            if UnitIsFriend(_player, _target) then
+                -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
                 return _mouseover, false
             end
             
