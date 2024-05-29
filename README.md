@@ -83,7 +83,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   ```
   
   <br/>You can also use the ';' character as a separator:
-    
+
   ```
   /pfquickcast@heal Holy Shock; Flash of Light;
   
