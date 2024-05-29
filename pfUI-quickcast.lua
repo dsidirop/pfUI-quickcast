@@ -80,6 +80,39 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         SetCVar("AutoSelfCast", cvar_selfcast)
     end
 
+    local function strmatch(input, patternString, ...)
+        local variadicsArray = arg
+
+        assert(patternString ~= nil, "patternString must not be nil")
+
+        if patternString == "" then
+            return nil
+        end
+
+        local results = {string.find(input, patternString, unpack(variadicsArray))}
+
+        local startIndex = results[1]
+        if startIndex == nil then
+            -- no match
+            return nil
+        end
+
+        local match01 = results[3]
+        if match01 == nil then
+            local endIndex = results[2]
+            return string.sub(input, startIndex, endIndex) -- matched but without using captures   ("Foo 11 bar   ping pong"):match("Foo %d+ bar")
+        end
+
+        table.remove(results, 1) -- pop startIndex
+        table.remove(results, 1) -- pop endIndex
+
+        return unpack(results) -- matched with captures  ("Foo 11 bar   ping pong"):match("Foo (%d+) bar")
+    end
+
+    local function strtrim(input)
+        return strmatch(input, '^%s*(.*%S)') or ''
+    end
+
     local _parsedSpellStringsCache = {}
     local function parseSpellsString(spellsString)
         local spellsArray = _parsedSpellStringsCache[spellsString]
@@ -89,6 +122,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         spellsArray = {}
         for spell in string.gfind(spellsString, "%s*([^,;]*[^,;])%s*") do
+            spell = strtrim(spell)
             if spell ~= "" then -- ignore empty strings
                 table.insert(spellsArray, spell)
             end
