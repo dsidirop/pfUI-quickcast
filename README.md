@@ -21,7 +21,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>One could argue that /pfcast could be refactored further so that 'loadstring()' could be wrapped and made smarter with some sort of caching mechanism
   for the most commonly used LUA scripts passed to it, but that's just feels as flogging an ailing horse.<br/><br/>
 
-- **Intention**: The '/pfquickcast@heal' command and only that is interceptable by healing auto-ranking addons for optimum performance.<br/><br/>
+- **Intention**: The '/pfquickcast@heal' command and only that is intercept-able by healing auto-ranking addons for optimum performance.<br/><br/>
 
 - **Targeting**: The implementation of the '/pfquickcast@heal' is such that it only casts spells on **friendly** targets.<br/>
 
