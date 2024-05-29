@@ -183,17 +183,20 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
 
-        if use_target_toggle_workaround then
-            TargetUnit(proper_target)
-        end
-
         _pfui_ui_mouseover.unit = proper_target
 
         local spellsArray = parseSpellsString(spellsString)
+        
+        local targetToggled = false
         local spellThatQualified
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
             if isSpellUsable(spell) then
+                if use_target_toggle_workaround and not targetToggled then
+                    targetToggled = true
+                    TargetUnit(proper_target) --todo   if proper_target == _mouseover then we could try setting the target to none instead and see if its more efficient that way  
+                end
+                
                 -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] spell=" .. tostring(spell))
                 spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
@@ -217,7 +220,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
-        if use_target_toggle_workaround then
+        if targetToggled then
             -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switching back target ...")
             TargetLastTarget()
         end
