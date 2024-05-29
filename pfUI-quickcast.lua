@@ -33,16 +33,24 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _pfui_ui_mouseover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
 
     local _spell_target_units = (function()
-        local x = { [1] = _player, [2] = _target, [3] = _mouseover } -- prepare a list of units that can be used via spelltargetunit
+        -- https://wowpedia.fandom.com/wiki/UnitId   prepare a list of units that can be used via spelltargetunit in vanilla wow 1.12
+        local standardSpellTargets = { [1] = _player, [2] = _target, [3] = _mouseover, [4] = "pet" }
 
         for i = 1, MAX_PARTY_MEMBERS do
-            table.insert(x, "party" .. i)
+            table.insert(standardSpellTargets, "party" .. i)
         end
         for i = 1, MAX_RAID_MEMBERS do
-            table.insert(x, "raid" .. i)
+            table.insert(standardSpellTargets, "raid" .. i)
         end
 
-        return x
+        for i = 1, MAX_PARTY_MEMBERS do -- leave pets for last
+            table.insert(standardSpellTargets, "partypet" .. i)
+        end
+        for i = 1, MAX_RAID_MEMBERS do
+            table.insert(standardSpellTargets, "raidpet" .. i)
+        end
+
+        return standardSpellTargets
     end)()
 
     local function tryTranslateUnitToStandardSpellTargetUnit(unit)
