@@ -25,6 +25,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local pfGetSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
     local pfGetSpellIndex_ = _G.pfUI.api.libspell.GetSpellIndex
 
+    local _pet = "pet"
     local _player = "player"
     local _target = "target"
     local _mouseover = "mouseover"
@@ -34,7 +35,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local _spell_target_units = (function()
         -- https://wowpedia.fandom.com/wiki/UnitId   prepare a list of units that can be used via spelltargetunit in vanilla wow 1.12
-        local standardSpellTargets = { [1] = _player, [2] = _target, [3] = _mouseover, [4] = "pet" }
+        -- notice that we intentionally omitted 'mouseover' below as its causing problems without offering any real benefit
+
+        local standardSpellTargets = { [1] = _player, [2] = _target, [3] = _pet }
 
         for i = 1, MAX_PARTY_MEMBERS do
             table.insert(standardSpellTargets, "party" .. i)
@@ -309,7 +312,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             
             local unit = mouseFrame.label .. mouseFrame.id            
             if UnitCanAssist(_player, unit) then
-                local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- _mouseover -> "party1" or "raid1" etc    todo   examine if we really need this here ...
+                local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- _mouseover -> "party1" or "raid1" etc
                 if unitAsTeamUnit then
                     return unitAsTeamUnit, false
                 end
@@ -321,8 +324,18 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         
         -- UnitExists(_mouseover) no need to check this here
         if UnitCanAssist(_player, _mouseover) then
-            --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
-            return _mouseover, UnitCanAssist(_player, _target) --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
+            --00 mouse hovering directly over friendly player-toons in the game-world?
+
+            if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster 
+                return _mouseover, false
+            end
+            
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit)
+            if unitAsTeamUnit then -- _mouseover -> "party1" or "raid1" etc   it's much more efficient this way in a team context compared to having to use target-swap hack
+                return unitAsTeamUnit, false
+            end
+
+            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
         end
 
         if UnitCanAssist(_player, _target) then
@@ -462,11 +475,18 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 UnitExists(_mouseover)="..tostring(UnitExists(_mouseover)))
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 not UnitIsFriend(_player, _mouseover)="..tostring(not UnitIsFriend(_player, _mouseover)))
         if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) and not UnitIsUnit(_target, _mouseover) then
-            --00 mouse hovering directly over a enemy toon in the game-world?
+            --00 mouse hovering directly over an enemy toon in the game-world?
 
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 050    UnitName(_mouseover)='" .. UnitName(_mouseover) .. "'")
+            if UnitIsFriend(_player, _target) then -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
+                return _mouseover, false
+            end
             
-            return _mouseover, true
+            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(unit) 
+            if mindControlledFriendTurnedHostile then --             this in fact does make sense because a raid member might get mind-controlled
+                return mindControlledFriendTurnedHostile, false --   and turn hostile in which case we can and should avoid the target-swap hack
+            end
+            
+            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
         end
 
         -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 060")
