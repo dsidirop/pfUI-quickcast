@@ -330,8 +330,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return _mouseover, false
             end
             
-            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit)
-            if unitAsTeamUnit then -- _mouseover -> "party1" or "raid1" etc   it's much more efficient this way in a team context compared to having to use target-swap hack
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_mouseover)
+            if unitAsTeamUnit then -- _mouseover -> "party1" or "raid1" etc   it is much more efficient this way in a team context compared to having to use target-swap hack
                 return unitAsTeamUnit, false
             end
 
@@ -481,11 +481,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return _mouseover, false
             end
             
-            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(unit) 
+            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(_mouseover) -- todo   experiment also with party1target party2target etc and see if its supported indeed
             if mindControlledFriendTurnedHostile then --             this in fact does make sense because a raid member might get mind-controlled
                 return mindControlledFriendTurnedHostile, false --   and turn hostile in which case we can and should avoid the target-swap hack
             end
-            
+
             return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
         end
 
