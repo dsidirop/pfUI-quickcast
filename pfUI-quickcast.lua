@@ -28,7 +28,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _pet = "pet"
     local _player = "player"
     local _target = "target"
-    local _mouseover = "mouseover"
+    local _toon_mouse_hover = "mouseover"
     local _target_of_target = "targettarget"
 
     local _pfui_ui_mouseover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
@@ -56,7 +56,16 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return standardSpellTargets
     end)()
 
+    local function tryGetUnitOfFrameHovering()
+        local mouseFrame = GetMouseFocus()
+        return mouseFrame and mouseFrame.label and mouseFrame.id
+                and (mouseFrame.label .. mouseFrame.id)
+                or nil
+    end
+
     local function tryTranslateUnitToStandardSpellTargetUnit(unit)
+        -- todo optimize this depending on whether we are solo or in a party or a raid
+        
         for _, spellTargetUnitName in pairs_(_spell_target_units) do
             if unit == spellTargetUnitName or UnitIsUnit(unit, spellTargetUnitName) then
                 -- if the mouseover unit and the partyX unit are the one and the same target then return partyX etc
@@ -243,11 +252,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local function deduceIntendedTarget_forGenericSpells()
         -- inspired by /pfcast implementation
-        local unit = _mouseover
+        local unit = _toon_mouse_hover
         if not UnitExists(unit) then
-            local frame = GetMouseFocus()
-            if frame and frame.label and frame.id then
-                unit = frame.label .. frame.id
+            unit = tryGetUnitOfFrameHovering()
+            if unit then
+                -- nothing more to do
             elseif UnitExists(_target) then
                 unit = _target
             elseif getCVar_("AutoSelfCast") == "1" then
@@ -310,35 +319,32 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function deduceIntendedTarget_forFriendlySpells()
-        local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
-        if mouseFrame and mouseFrame.label and mouseFrame.id then
+        
+        local unitOfFrameHovering = tryGetUnitOfFrameHovering()
+        if unitOfFrameHovering and UnitCanAssist(_player, unitOfFrameHovering) then
             
-            local unit = mouseFrame.label .. mouseFrame.id            
-            if UnitCanAssist(_player, unit) then
-                local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- _mouseover -> "party1" or "raid1" etc
-                if unitAsTeamUnit then
-                    return unitAsTeamUnit, false
-                end
-
-                return unit, true
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- todo  do we need this to check that the friendly target is indeed part of the raid or we can live without this?
+            if unitAsTeamUnit then
+                return unitAsTeamUnit, false
             end
 
+            return unit, true
         end
         
         -- UnitExists(_mouseover) no need to check this here
-        if UnitCanAssist(_player, _mouseover) and not UnitIsDeadOrGhost(_mouseover) then
+        if UnitCanAssist(_player, _toon_mouse_hover) and not UnitIsDeadOrGhost(_toon_mouse_hover) then
             --00 mouse hovering directly over friendly player-toons in the game-world?
 
             if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster 
-                return _mouseover, false
+                return _toon_mouse_hover, false
             end
             
-            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_mouseover)
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_toon_mouse_hover)
             if unitAsTeamUnit then -- _mouseover -> "party1" or "raid1" etc   it is much more efficient this way in a team context compared to having to use target-swap hack
                 return unitAsTeamUnit, false
             end
 
-            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
+            return _toon_mouse_hover, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
         end
 
         if UnitCanAssist(_player, _target) then
@@ -460,37 +466,34 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region /pfquickcast@enemy
 
     local function deduceIntendedTarget_forOffensiveSpells()
-        if UnitExists(_mouseover) -- for offensive spells it is more common to use world-mouseover rather than unit-frames mouse-hovering
-                and not UnitIsFriend(_player, _mouseover)
-                and not UnitIsUnit(_mouseover, _target)
-                and not UnitIsDeadOrGhost(_mouseover) then
+
+        if UnitExists(_toon_mouse_hover) -- for offensive spells it is more common to use world-mouseover rather than unit-frames mouse-hovering
+                and not UnitIsFriend(_player, _toon_mouse_hover)
+                and not UnitIsUnit(_toon_mouse_hover, _target)
+                and not UnitIsDeadOrGhost(_toon_mouse_hover) then
             --00 mouse hovering directly over an enemy toon in the game-world?
 
             if UnitIsFriend(_player, _target) then
                 -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
-                return _mouseover, false
+                return _toon_mouse_hover, false
             end
 
-            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(_mouseover) -- todo   experiment also with party1target party2target etc and see if its supported indeed
+            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(_toon_mouse_hover) -- todo   experiment also with party1target party2target etc and see if its supported indeed
             if mindControlledFriendTurnedHostile then --             this in fact does make sense because a raid member might get mind-controlled
                 return mindControlledFriendTurnedHostile, false --   and turn hostile in which case we can and should avoid the target-swap hack
             end
 
-            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
+            return _toon_mouse_hover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
         end
 
-        local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
-        if mouseFrame and mouseFrame.label and mouseFrame.id then
-            local unit = mouseFrame.label .. mouseFrame.id
-
-            if UnitExists(unit)
-                    and not UnitIsFriend(_player, unit)
-                    and not UnitIsUnit(_target, unit)
-                    and not UnitIsDeadOrGhost(unit) then
-                -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not enemy ones
-                return unit, false
-            end
-            
+        local unitOfFrameHovering = tryGetUnitOfFrameHovering()
+        if unitOfFrameHovering
+                and UnitExists(unitOfFrameHovering)
+                and not UnitIsFriend(_player, unitOfFrameHovering)
+                and not UnitIsUnit(_target, unitOfFrameHovering)
+                and not UnitIsDeadOrGhost(unitOfFrameHovering) then
+            -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- no point to do that here    it only makes sense for friendly units not enemy ones
+            return unitOfFrameHovering, false
         end
         
         if UnitExists(_target) and not UnitIsFriend(_player, _target) and not UnitIsDeadOrGhost(_target) then
@@ -543,30 +546,27 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local gotEnemyCandidateFromMouseHover = false
 
-        local mouseFrame = GetMouseFocus()
-        local mouseFrameUnit = mouseFrame and mouseFrame.label and mouseFrame.id
-                and (mouseFrame.label .. mouseFrame.id)
-                or nil
-        if mouseFrameUnit and not UnitIsUnit(mouseFrameUnit, _target) then
+        local unitOfFrameHovering = tryGetUnitOfFrameHovering()
+        if unitOfFrameHovering and not UnitIsUnit(unitOfFrameHovering, _target) then
 
-            if not UnitExists(mouseFrameUnit) --                  unit-frames mouse-hovering   
-                    or UnitIsFriend(_player, mouseFrameUnit) --   we check that the mouse-hover unit-frame is alive and enemy
-                    or UnitIsDead(mouseFrameUnit) then --         if its not then we guard close
+            if not UnitExists(unitOfFrameHovering) --                  unit-frames mouse-hovering   
+                    or UnitIsFriend(_player, unitOfFrameHovering) --   we check that the mouse-hover unit-frame is alive and enemy
+                    or UnitIsDeadOrGhost(unitOfFrameHovering) then --  if its not then we guard close
                 return nil, false
             end
 
             gotEnemyCandidateFromMouseHover = true
-            TargetUnit(mouseFrameUnit)
+            TargetUnit(unitOfFrameHovering)
 
-        elseif UnitExists(_mouseover) and not UnitIsUnit(_mouseover, _target) then
+        elseif UnitExists(_toon_mouse_hover) and not UnitIsUnit(_toon_mouse_hover, _target) then
 
-            if UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a enemy toon in the game world?
-                    or UnitIsDead(_mouseover) then -- we check if its enemy and alive   if its not we guard close
+            if UnitIsFriend(_player, _toon_mouse_hover) --   is the mouse hovering directly over a enemy toon in the game world?
+                    or UnitIsDead(_toon_mouse_hover) then -- we check if its enemy and alive   if its not we guard close
                 return nil, false
             end
 
             gotEnemyCandidateFromMouseHover = true
-            TargetUnit(_mouseover)
+            TargetUnit(_toon_mouse_hover)
         end
 
         if (gotEnemyCandidateFromMouseHover or not UnitIsFriend(_player, _target))
@@ -616,39 +616,33 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region /pfquickcast@enemytbf
 
-    local function deduceIntendedTarget_fordirectenemyedByFriend()
+    local function deduceIntendedTarget_forEnemyTargetedByFriend()
 
         local gotFriendCandidateFromMouseHover = false
 
-        local mouseFrame = GetMouseFocus()
-        local mouseFrameUnit = mouseFrame and mouseFrame.label and mouseFrame.id
-                and (mouseFrame.label .. mouseFrame.id)
-                or nil
-        if mouseFrameUnit and not UnitIsUnit(mouseFrameUnit, _target) then
+        local unitOfFrameHovering = tryGetUnitOfFrameHovering()
+        if unitOfFrameHovering and not UnitIsUnit(unitOfFrameHovering, _target) then
 
-            if not UnitExists(mouseFrameUnit) -- unit-frames mouse-hovering   
-                    or not UnitIsFriend(_player, mouseFrameUnit)
-                    or UnitIsDead(mouseFrameUnit) then
+            if not UnitIsFriend(_player, unitOfFrameHovering) or UnitIsDeadOrGhost(unitOfFrameHovering) then
                 return nil, false
             end
 
             gotFriendCandidateFromMouseHover = true
-            TargetUnit(mouseFrameUnit)
+            TargetUnit(unitOfFrameHovering)
 
-        elseif UnitExists(_mouseover) and not UnitIsUnit(_mouseover, _target) then
+        elseif UnitExists(_toon_mouse_hover) and not UnitIsUnit(_toon_mouse_hover, _target) then
 
-            if not UnitIsFriend(_player, _mouseover) --   is the mouse hovering directly over a enemy toon in the game world?
-                    or UnitIsDead(_mouseover) then --     we check if its enemy and alive   if its not we guard close
+            if not UnitIsFriend(_player, _toon_mouse_hover) or UnitIsDeadOrGhost(_toon_mouse_hover) then
                 return nil, false
             end
 
             gotFriendCandidateFromMouseHover = true
-            TargetUnit(_mouseover)
+            TargetUnit(_toon_mouse_hover)
         end
 
         if (gotFriendCandidateFromMouseHover or UnitIsFriend(_player, _target))
                 and not UnitIsFriend(_player, _target_of_target)
-                and not UnitIsDead(_target_of_target) then
+                and not UnitIsDeadOrGhost(_target_of_target) then
             local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
             if unitAsTeamUnit then
                 return unitAsTeamUnit, false
@@ -676,7 +670,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_fordirectenemyedByFriend()
+        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forEnemyTargetedByFriend()
         if proper_target == nil then
             return nil
         end
@@ -695,10 +689,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local function deduceIntendedTarget_forDirectEnemy()
         if not UnitExists(_target)
-                and UnitExists(_mouseover)
-                and not UnitIsFriend(_player, _mouseover)
-                and not UnitIsDeadOrGhost(_mouseover) then
-            TargetUnit(_mouseover)
+                and UnitExists(_toon_mouse_hover)
+                and not UnitIsFriend(_player, _toon_mouse_hover)
+                and not UnitIsDeadOrGhost(_toon_mouse_hover) then
+            TargetUnit(_toon_mouse_hover)
             return _target, false
         end
         
