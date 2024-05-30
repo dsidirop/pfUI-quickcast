@@ -185,6 +185,15 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and enemy targets (p.e. Paladin's Holy Shock).<br/><br/>
 
 
+- `/pfquickcast@directenemy <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("<spell_name>")` )
+
+  <br/>Casts spells on your direct **enemy / neutral** target. If you have no enemy currently selected the command will select the enemy under your mouse cursor if any. 
+
+  <br/>- You can in fact specify multiple spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
+
+  <br/>Use this flavour for **offensive** spells or generic spells that can be used on both friendly and enemy targets (p.e. Paladin's Holy Shock).<br/><br/>
+
+
 - `/pfquickcast@enemytbf <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ENEMY_TBF("<spell_name>")` )
 
   <br/>**@enemytbf** stands for **enemy-targeted-by-friend**, and it's the inverse of @healtote in the sense that you now mouse-hover over a
