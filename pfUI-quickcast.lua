@@ -460,6 +460,25 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region /pfquickcast@enemy
 
     local function deduceIntendedTarget_forOffensiveSpells()
+        if UnitExists(_mouseover) -- for offensive spells it is more common to use world-mouseover rather than unit-frames mouse-hovering
+                and not UnitIsFriend(_player, _mouseover)
+                and not UnitIsUnit(_mouseover, _target)
+                and not UnitIsDeadOrGhost(_mouseover) then
+            --00 mouse hovering directly over an enemy toon in the game-world?
+
+            if UnitIsFriend(_player, _target) then
+                -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
+                return _mouseover, false
+            end
+
+            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(_mouseover) -- todo   experiment also with party1target party2target etc and see if its supported indeed
+            if mindControlledFriendTurnedHostile then --             this in fact does make sense because a raid member might get mind-controlled
+                return mindControlledFriendTurnedHostile, false --   and turn hostile in which case we can and should avoid the target-swap hack
+            end
+
+            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
+        end
+
         local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
         if mouseFrame and mouseFrame.label and mouseFrame.id then
             local unit = mouseFrame.label .. mouseFrame.id
@@ -473,26 +492,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
             
         end
-
-        if UnitExists(_mouseover)
-                and not UnitIsFriend(_player, _mouseover)
-                and not UnitIsUnit(_mouseover, _target)
-                and not UnitIsDeadOrGhost(_mouseover) then
-            --00 mouse hovering directly over an enemy toon in the game-world?
-
-            if UnitIsFriend(_player, _target) then
-                -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
-                return _mouseover, false
-            end
-            
-            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(_mouseover) -- todo   experiment also with party1target party2target etc and see if its supported indeed
-            if mindControlledFriendTurnedHostile then --             this in fact does make sense because a raid member might get mind-controlled
-                return mindControlledFriendTurnedHostile, false --   and turn hostile in which case we can and should avoid the target-swap hack
-            end
-
-            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
-        end
-
+        
         if UnitExists(_target) and not UnitIsFriend(_player, _target) and not UnitIsDeadOrGhost(_target) then
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
             return _target, false
