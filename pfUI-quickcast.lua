@@ -431,52 +431,33 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region /pfquickcast@enemy
 
     local function deduceIntendedTarget_forOffensiveSpells()
-        -- print("********")
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 000")
-        
         local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
         if mouseFrame and mouseFrame.label and mouseFrame.id then
+
             local unit = mouseFrame.label .. mouseFrame.id
-
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 010 enemy unit=" .. tostring(unit))
-
             if UnitExists(unit) and not UnitIsFriend(_player, unit) and not UnitIsUnit(_target, unit) then
                 -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not enemy ones
-                
-                -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 020 enemy unit=" .. tostring(unit) .. ", unitAsTeamUnit=" .. tostring(unitAsTeamUnit))
 
                 return unit, false
             end
 
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 030")
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 UnitExists(_mouseover)="..tostring(UnitExists(_mouseover)))
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 040 not UnitIsFriend(_player, _mouseover)="..tostring(not UnitIsFriend(_player, _mouseover)))
         if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) and not UnitIsUnit(_target, _mouseover) then
             --00 mouse hovering directly over a enemy toon in the game-world?
-
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 050    UnitName(_mouseover)='" .. UnitName(_mouseover) .. "'")
             
             return _mouseover, true
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 060")
         if UnitExists(_target) and not UnitIsFriend(_player, _target) then
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 070")
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
             return _target, false
         end
 
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 080")
         if not UnitIsFriend(_player, _target_of_target) then
-            -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 090")
-            
             -- at this point the current target is a friendly unit so we try to spell-cast on its own enemy target   useful fallback behaviour both when soloing and when raid healing
             return _target_of_target, false
         end
-
-        -- print("** [pfUI-quickcast] [deduceIntendedTarget_forOffensiveSpells] 100")
 
         return nil, false -- no valid target found
 
