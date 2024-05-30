@@ -25,6 +25,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local pfGetSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
     local pfGetSpellIndex_ = _G.pfUI.api.libspell.GetSpellIndex
 
+    local _pet = "pet"
     local _player = "player"
     local _target = "target"
     local _mouseover = "mouseover"
@@ -33,16 +34,26 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _pfui_ui_mouseover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
 
     local _spell_target_units = (function()
-        local x = { [1] = _player, [2] = _target, [3] = _mouseover } -- prepare a list of units that can be used via spelltargetunit
+        -- https://wowpedia.fandom.com/wiki/UnitId   prepare a list of units that can be used via spelltargetunit in vanilla wow 1.12
+        -- notice that we intentionally omitted 'mouseover' below as its causing problems without offering any real benefit
+
+        local standardSpellTargets = { [1] = _player, [2] = _target, [3] = _pet }
 
         for i = 1, MAX_PARTY_MEMBERS do
-            table.insert(x, "party" .. i)
+            table.insert(standardSpellTargets, "party" .. i)
         end
         for i = 1, MAX_RAID_MEMBERS do
-            table.insert(x, "raid" .. i)
+            table.insert(standardSpellTargets, "raid" .. i)
         end
 
-        return x
+        for i = 1, MAX_PARTY_MEMBERS do -- leave pets for last
+            table.insert(standardSpellTargets, "partypet" .. i)
+        end
+        for i = 1, MAX_RAID_MEMBERS do
+            table.insert(standardSpellTargets, "raidpet" .. i)
+        end
+
+        return standardSpellTargets
     end)()
 
     local function tryTranslateUnitToStandardSpellTargetUnit(unit)
@@ -172,17 +183,20 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
         -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
 
-        if use_target_toggle_workaround then
-            TargetUnit(proper_target)
-        end
-
         _pfui_ui_mouseover.unit = proper_target
 
         local spellsArray = parseSpellsString(spellsString)
+        
+        local targetToggled = false
         local spellThatQualified
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
             if isSpellUsable(spell) then
+                if use_target_toggle_workaround and not targetToggled then
+                    targetToggled = true
+                    TargetUnit(proper_target)  
+                end
+                
                 -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] spell=" .. tostring(spell))
                 spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
@@ -206,7 +220,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
-        if use_target_toggle_workaround then
+        if targetToggled then
             -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switching back target ...")
             TargetLastTarget()
         end
@@ -278,7 +292,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         return setTargetIfNeededAndCast(
-                onCast, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                onCast,
                 spell,
                 proper_target,
                 use_target_toggle_workaround
@@ -301,7 +315,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             
             local unit = mouseFrame.label .. mouseFrame.id            
             if UnitCanAssist(_player, unit) then
-                local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- _mouseover -> "party1" or "raid1" etc    todo   examine if we really need this here ...
+                local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- _mouseover -> "party1" or "raid1" etc
                 if unitAsTeamUnit then
                     return unitAsTeamUnit, false
                 end
@@ -312,9 +326,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
         
         -- UnitExists(_mouseover) no need to check this here
-        if UnitCanAssist(_player, _mouseover) then
-            --00 mouse hovering directly over friendly players? (meaning their toon - not their unit frame)
-            return _mouseover, UnitCanAssist(_player, _target) --00 we need to use the target-swap hack here if and only if the currently selected target is friendly otherwise the heal will land on the currently selected friendly target
+        if UnitCanAssist(_player, _mouseover) and not UnitIsDeadOrGhost(_mouseover) then
+            --00 mouse hovering directly over friendly player-toons in the game-world?
+
+            if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster 
+                return _mouseover, false
+            end
+            
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(_mouseover)
+            if unitAsTeamUnit then -- _mouseover -> "party1" or "raid1" etc   it is much more efficient this way in a team context compared to having to use target-swap hack
+                return unitAsTeamUnit, false
+            end
+
+            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
         end
 
         if UnitCanAssist(_player, _target) then
@@ -394,7 +418,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        return setTargetIfNeededAndCast(onSelfCast, spellsString, _player, false)
+        return setTargetIfNeededAndCast(
+                onSelfCast,
+                spellsString,
+                _player,
+                false
+        )
     end
 
     -- endregion /pfquickcast@heal and :self
@@ -433,28 +462,43 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local function deduceIntendedTarget_forOffensiveSpells()
         local mouseFrame = GetMouseFocus() -- unit-frames mouse-hovering
         if mouseFrame and mouseFrame.label and mouseFrame.id then
-
             local unit = mouseFrame.label .. mouseFrame.id
-            if UnitExists(unit) and not UnitIsFriend(_player, unit) and not UnitIsUnit(_target, unit) then
-                -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not enemy ones
 
+            if UnitExists(unit)
+                    and not UnitIsFriend(_player, unit)
+                    and not UnitIsUnit(_target, unit)
+                    and not UnitIsDeadOrGhost(unit) then
+                -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unit) -- no point to do that here    it only makes sense for friendly units not enemy ones
                 return unit, false
             end
-
-        end
-
-        if UnitExists(_mouseover) and not UnitIsFriend(_player, _mouseover) and not UnitIsUnit(_target, _mouseover) then
-            --00 mouse hovering directly over a enemy toon in the game-world?
             
-            return _mouseover, true
         end
 
-        if UnitExists(_target) and not UnitIsFriend(_player, _target) then
+        if UnitExists(_mouseover)
+                and not UnitIsFriend(_player, _mouseover)
+                and not UnitIsUnit(_mouseover, _target)
+                and not UnitIsDeadOrGhost(_mouseover) then
+            --00 mouse hovering directly over an enemy toon in the game-world?
+
+            if UnitIsFriend(_player, _target) then
+                -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
+                return _mouseover, false
+            end
+            
+            local mindControlledFriendTurnedHostile = tryTranslateUnitToStandardSpellTargetUnit(_mouseover) -- todo   experiment also with party1target party2target etc and see if its supported indeed
+            if mindControlledFriendTurnedHostile then --             this in fact does make sense because a raid member might get mind-controlled
+                return mindControlledFriendTurnedHostile, false --   and turn hostile in which case we can and should avoid the target-swap hack
+            end
+
+            return _mouseover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
+        end
+
+        if UnitExists(_target) and not UnitIsFriend(_player, _target) and not UnitIsDeadOrGhost(_target) then
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
             return _target, false
         end
 
-        if not UnitIsFriend(_player, _target_of_target) then
+        if not UnitIsFriend(_player, _target_of_target) and not UnitIsDeadOrGhost(_target_of_target) then
             -- at this point the current target is a friendly unit so we try to spell-cast on its own enemy target   useful fallback behaviour both when soloing and when raid healing
             return _target_of_target, false
         end
@@ -572,7 +616,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region /pfquickcast@enemytbf
 
-    local function deduceIntendedTarget_forEnemyTargetedByFriend()
+    local function deduceIntendedTarget_fordirectenemyedByFriend()
 
         local gotFriendCandidateFromMouseHover = false
 
@@ -632,13 +676,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
-        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_forEnemyTargetedByFriend()
+        local proper_target, use_target_toggle_workaround  = deduceIntendedTarget_fordirectenemyedByFriend()
         if proper_target == nil then
             return nil
         end
 
         return setTargetIfNeededAndCast(
-                onCast, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                onCast,
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround
@@ -646,5 +690,51 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     -- endregion /pfquickcast@enemytbf
+
+    -- region /pfquickcast@directenemy
+
+    local function deduceIntendedTarget_forDirectEnemy()
+        if not UnitExists(_target)
+                and UnitExists(_mouseover)
+                and not UnitIsFriend(_player, _mouseover)
+                and not UnitIsDeadOrGhost(_mouseover) then
+            TargetUnit(_mouseover)
+            return _target, false
+        end
+        
+        if not UnitIsFriend(_player, _target) and not UnitIsDeadOrGhost(_target) then
+            return _target, false
+        end
+
+        return nil, false -- no valid target found
+    end
+    
+    _G.SLASH_PFQUICKCAST_DIRECT_ENEMY1 = "/pfquickcast@directenemy"
+    _G.SLASH_PFQUICKCAST_DIRECT_ENEMY2 = "/pfquickcast:directenemy"
+    _G.SLASH_PFQUICKCAST_DIRECT_ENEMY3 = "/pfquickcast.directenemy"
+    _G.SLASH_PFQUICKCAST_DIRECT_ENEMY4 = "/pfquickcast_directenemy"
+    _G.SLASH_PFQUICKCAST_DIRECT_ENEMY5 = "/pfquickcastdirectenemy"
+    function SlashCmdList.PFQUICKCAST_DIRECT_ENEMY(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround = deduceIntendedTarget_forDirectEnemy()
+        if proper_target == nil then
+            return nil
+        end
+
+        return setTargetIfNeededAndCast(
+                onCast,
+                spellsString,
+                _target,
+                use_target_toggle_workaround
+        )
+    end
+
+    -- endregion /pfquickcast@directenemy
+
 
 end)
