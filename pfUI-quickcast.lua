@@ -33,6 +33,36 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local _pfui_ui_mouseover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
 
+    local _solo_spell_target_units = (function()
+        local standardSpellTargets = { }
+
+        table.insert(standardSpellTargets, _target) -- most common target so we check this first
+        table.insert(standardSpellTargets, _player) -- these are the most rare mouse-hovering scenarios so we check them last
+        table.insert(standardSpellTargets, _pet)
+        table.insert(standardSpellTargets, _target_of_target)
+
+        return standardSpellTargets
+    end)()
+
+    local _party_spell_target_units = (function()
+        local standardSpellTargets = { }
+
+        table.insert(standardSpellTargets, _target) -- most common target so we check this first
+        table.insert(standardSpellTargets, _player)
+
+        for i = 1, MAX_PARTY_MEMBERS do
+            table.insert(standardSpellTargets, "party" .. i)
+        end
+
+        for i = 1, MAX_PARTY_MEMBERS do -- these are the most rare mouse-hovering scenarios so we check them last
+            table.insert(standardSpellTargets, "partypet" .. i)
+        end
+
+        table.insert(standardSpellTargets, _target_of_target)
+
+        return standardSpellTargets
+    end)()
+
     local _raid_spell_target_units = (function()
         -- https://wowpedia.fandom.com/wiki/UnitId   prepare a list of units that can be used via spelltargetunit in vanilla wow 1.12
         -- notice that we intentionally omitted 'mouseover' below as its causing problems without offering any real benefit
@@ -48,15 +78,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             table.insert(standardSpellTargets, "raid" .. i)
         end
 
-        for i = 1, MAX_PARTY_MEMBERS do -- leave pets for last
+        for i = 1, MAX_PARTY_MEMBERS do -- pets are more rare targets 
             table.insert(standardSpellTargets, "partypet" .. i)
         end
         for i = 1, MAX_RAID_MEMBERS do
             table.insert(standardSpellTargets, "raidpet" .. i)
         end
 
-        table.insert(standardSpellTargets, _player) --   these are the most rare mouse-hovering scenarios so we check them last
-        table.insert(standardSpellTargets, _pet)
+        table.insert(standardSpellTargets, _player) -- these are the most rare mouse-hovering scenarios so we check them last
         table.insert(standardSpellTargets, _target_of_target)
 
         return standardSpellTargets
@@ -70,9 +99,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function tryTranslateUnitToStandardSpellTargetUnit(unit)
-        -- todo optimize this depending on whether we are solo or in a party or a raid
+        local properSpellTargetUnits = UnitInRaid(unit) and _raid_spell_target_units
+                or UnitInParty(unit) and _party_spell_target_units
+                or _solo_spell_target_units
         
-        for _, spellTargetUnitName in pairs_(_raid_spell_target_units) do
+        for _, spellTargetUnitName in pairs_(properSpellTargetUnits) do
             if unit == spellTargetUnitName or UnitIsUnit(unit, spellTargetUnitName) then -- 00
                 return spellTargetUnitName
             end
