@@ -506,7 +506,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 and not UnitIsUnit(_toon_mouse_hover, _target)
                 and not UnitIsDeadOrGhost(_toon_mouse_hover) then
             --00 mouse hovering directly over an enemy toon in the game-world?
-
+            
             if UnitIsFriend(_player, _target) then
                 -- if the current target is friendly then we dont need to use the target-swap hack   simply using mouseover is faster
                 return _toon_mouse_hover, false
@@ -527,17 +527,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 and not UnitIsUnit(_target, unitOfFrameHovering)
                 and not UnitIsDeadOrGhost(unitOfFrameHovering) then
             -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- no point to do that here    it only makes sense for friendly units not enemy ones
+
             return unitOfFrameHovering, false
         end
         
-        if UnitExists(_target) and not UnitIsFriend(_player, _target) and not UnitIsDeadOrGhost(_target) then
+        if UnitExists(_target) and not UnitIsDeadOrGhost(_target) and not UnitIsFriend(_player, _target) then
             -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
-            return _target, false
-        end
 
-        if not UnitIsFriend(_player, _target_of_target) and not UnitIsDeadOrGhost(_target_of_target) then
-            -- at this point the current target is a friendly unit so we try to spell-cast on its own enemy target   useful fallback behaviour both when soloing and when raid healing
-            return _target_of_target, false
+            return _target, false
         end
 
         return nil, false -- no valid target found
@@ -673,7 +670,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             gotFriendCandidateFromMouseHover = true
             TargetUnit(_toon_mouse_hover)
         end
-
+        
         if (gotFriendCandidateFromMouseHover or UnitIsFriend(_player, _target))
                 and not UnitIsFriend(_player, _target_of_target)
                 and not UnitIsDeadOrGhost(_target_of_target) then
@@ -682,7 +679,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return unitAsTeamUnit, false
             end
 
-            return _target_of_target, true -- free world pvp situations without raid
+            return _target_of_target, true -- its vital to use the target-toggle-hack otherwise the offensive spell wont be cast at all
         end
 
         if gotFriendCandidateFromMouseHover then
