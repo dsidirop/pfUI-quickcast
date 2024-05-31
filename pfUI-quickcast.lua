@@ -188,10 +188,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             proper_target,
             use_target_toggle_workaround
     )
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] spellsString=" .. tostring(spellsString))
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] proper_target=" .. tostring(proper_target))
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] use_target_toggle_workaround=" .. tostring(use_target_toggle_workaround))
-
         _pfui_ui_mouseover.unit = proper_target
 
         local spellsArray = parseSpellsString(spellsString)
@@ -205,17 +201,15 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                     targetToggled = true
                     TargetUnit(proper_target)  
                 end
-                
-                -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] spell=" .. tostring(spell))
+
                 spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
-                if proper_target == _player then -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages
+                if proper_target == _player then -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages   we live with this for now
                     spellThatQualified = spell
                     wasSpellCastSuccessful = true
                     break
                 end
 
-                -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] SpellIsTargeting()=" .. tostring(SpellIsTargeting()))
                 if SpellIsTargeting() then
                     -- if the spell is awaiting a target to be specified then set spell target to proper_target
                     SpellTargetUnit(proper_target)
@@ -230,13 +224,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         if targetToggled then
-            -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] switching back target ...")
             TargetLastTarget()
         end
 
         _pfui_ui_mouseover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
 
-        -- print("** [pfUI-quickcast] [setTargetIfNeededAndCast()] wasSpellCastSuccessful=" .. tostring(wasSpellCastSuccessful))
         if not wasSpellCastSuccessful then
             -- at this point if the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
             SpellStopTargeting()
@@ -729,6 +721,5 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     -- endregion /pfquickcast@directenemy
-
 
 end)
