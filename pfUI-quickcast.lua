@@ -33,11 +33,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local _pfui_ui_mouseover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
 
-    local _spell_target_units = (function()
+    local _raid_spell_target_units = (function()
         -- https://wowpedia.fandom.com/wiki/UnitId   prepare a list of units that can be used via spelltargetunit in vanilla wow 1.12
         -- notice that we intentionally omitted 'mouseover' below as its causing problems without offering any real benefit
 
-        local standardSpellTargets = { [1] = _player, [2] = _target, [3] = _pet }
+        local standardSpellTargets = { }
+
+        table.insert(standardSpellTargets, _target) -- most common target so we check this first
 
         for i = 1, MAX_PARTY_MEMBERS do
             table.insert(standardSpellTargets, "party" .. i)
@@ -53,6 +55,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             table.insert(standardSpellTargets, "raidpet" .. i)
         end
 
+        table.insert(standardSpellTargets, _player) --   these are the most rare mouse-hovering scenarios so we check them last
+        table.insert(standardSpellTargets, _pet)
+        table.insert(standardSpellTargets, _target_of_target)
+
         return standardSpellTargets
     end)()
 
@@ -66,16 +72,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local function tryTranslateUnitToStandardSpellTargetUnit(unit)
         -- todo optimize this depending on whether we are solo or in a party or a raid
         
-        for _, spellTargetUnitName in pairs_(_spell_target_units) do
-            if unit == spellTargetUnitName or UnitIsUnit(unit, spellTargetUnitName) then
-                -- if the mouseover unit and the partyX unit are the one and the same target then return partyX etc
+        for _, spellTargetUnitName in pairs_(_raid_spell_target_units) do
+            if unit == spellTargetUnitName or UnitIsUnit(unit, spellTargetUnitName) then -- 00
                 return spellTargetUnitName
             end
         end
 
         return nil
 
-        -- try to find a valid (friendly) unitstring that can be used for SpellTargetUnit(unit) to avoid another target switch
+        --00  try to find a valid (friendly) unitstring that can be used for SpellTargetUnit(unit) to avoid another target switch
+        --    if the given unit (p.e. mouseover) and the partyX unit are the one and the same target then return partyX etc
+        --
+        --    even though the check 'unit == spellTargetUnitName' is performed inside UnitIsUnit() we still need to check it here first
+        --    because we want to avoid the function call to UnitIsUnit() altogether if the unit is the same as the spell target unit
     end
     
     local function onSelfCast(spell)
@@ -315,7 +324,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local unitOfFrameHovering = tryGetUnitOfFrameHovering()
         if unitOfFrameHovering and UnitCanAssist(_player, unitOfFrameHovering) then
             
-            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- todo  do we need this to check that the friendly target is indeed part of the raid or we can live without this?
+            local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- we need to check  
             if unitAsTeamUnit then
                 return unitAsTeamUnit, false
             end
@@ -475,7 +484,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return mindControlledFriendTurnedHostile, false --   and turn hostile in which case we can and should avoid the target-swap hack
             end
 
-            return _toon_mouse_hover, true -- we need to use the target-swap hack here because the currently selected target is hostile   if we dont use the hack then the offensive spell will land on the currently selected hostile target
+            return _toon_mouse_hover, true -- we need to use the target-swap hack here because the currently selected target is hostile   its very resource intensive but if we dont use the hack then the offensive spell will land on the currently selected hostile target
         end
 
         local unitOfFrameHovering = tryGetUnitOfFrameHovering()
