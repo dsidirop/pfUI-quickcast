@@ -39,7 +39,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         table.insert(standardSpellTargets, _target) -- most common target so we check this first
         table.insert(standardSpellTargets, _player) -- these are the most rare mouse-hovering scenarios so we check them last
         table.insert(standardSpellTargets, _pet)
-        table.insert(standardSpellTargets, _target_of_target)
+        
+        -- table.insert(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
         return standardSpellTargets
     end)()
@@ -58,7 +59,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             table.insert(standardSpellTargets, "partypet" .. i)
         end
 
-        table.insert(standardSpellTargets, _target_of_target)
+        -- table.insert(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
         return standardSpellTargets
     end)()
@@ -86,7 +87,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         table.insert(standardSpellTargets, _player) -- these are the most rare mouse-hovering scenarios so we check them last
-        table.insert(standardSpellTargets, _target_of_target)
+        
+        -- table.insert(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
         return standardSpellTargets
     end)()
