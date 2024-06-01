@@ -120,25 +120,27 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         --    because we want to avoid the function call to UnitIsUnit() altogether if the unit is the same as the spell target unit
     end
     
-    local function onSelfCast(spell)
-        CastSpellByName(spell, 1)
+    local function onSelfCast(spellName, spellId, spellBookType, proper_target)
+        CastSpellByName(spellName, 1)
+        -- CastSpell(spellId, spellBookType, 1) -- todo   experiment with this flavor and see if it works
     end
 
-    local function onCast(spell, proper_target)
+    local function onCast(spellName, spellId, spellBookType, proper_target)
         if proper_target == _player then
-            CastSpellByName(spell, 1) -- faster
+            CastSpellByName(spellName, 1) -- faster
+            -- CastSpell(spellId, spellBookType, 1) -- todo   experiment with this flavor and see if it works
             return
         end
         
         local cvar_selfcast = getCVar_("AutoSelfCast")
         if cvar_selfcast == "0" then
             -- cast without selfcast cvar setting to allow spells to use spelltarget
-            CastSpellByName(spell, nil)
+            CastSpell(spellId, spellBookType) -- faster using spellid
             return
         end
 
         SetCVar("AutoSelfCast", "0")
-        pcall(CastSpellByName, spell, nil)
+        pcall(CastSpell, spellId, spellBookType) -- faster using spellid
         SetCVar("AutoSelfCast", cvar_selfcast)
     end
 
@@ -234,6 +236,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("")
 
         return
+        spellId,
+        spellBookType,
         usedAtTimestamp == 0, -- check if the spell is off cooldown
         minRange == 0 and maxRange == 0 and _non_self_castable_spells[spellRawName] == nil -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
     end
@@ -250,7 +254,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local spellThatQualified
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
-            local canBeUsed, isSpellCastOnSelfOnly = isSpellUsable(spell)
+            local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly = isSpellUsable(spell)
             if canBeUsed then
                 if use_target_toggle_workaround and not isSpellCastOnSelfOnly and not targetToggled then
                     targetToggled = true
@@ -262,7 +266,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                         and _player
                         or proper_target
 
-                spellCastCallback(spell, eventualTarget) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+                spellCastCallback(spell, spellId, spellBookType, eventualTarget) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
                 if eventualTarget == _player then -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages   we live with this for now
                     spellThatQualified = spell
@@ -364,10 +368,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region   /pfquickcast:heal  and  :healself
 
-    function pfUIQuickCast.OnHeal(spell, proper_target)
+    function pfUIQuickCast.OnHeal(spellName, spellId, spellBookType, proper_target)
         -- keep the proper_target parameter even if its not needed per se this method   we want
         -- calls to this method to be hooked-upon/intercepted by third party heal-autoranking addons
-        return onCast(spell, proper_target)
+        return onCast(spellName, spellId, spellBookType, proper_target)
     end
 
     local function deduceIntendedTarget_forFriendlySpells()
