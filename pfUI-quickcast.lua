@@ -194,20 +194,32 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return spellsArray
     end
     
+    local _non_self_castable_spells = { -- some spells report 0 min/max range but are not self-castable
+        ["Maul"] = true,
+        ["Slam"] = true,
+        ["Holy Strike"] = true,
+        ["Raptor Strike"] = true,
+        ["Heroic Strike"] = true,
+    }
+    
     local function isSpellUsable(spell)
-        local spellRawName, rank = pfGetSpellInfo_(spell) -- cache-aware
+        local spellRawName, rank, _, _, minRange, maxRange, spellId, spellBookType = pfGetSpellInfo_(spell) -- cache-aware
 
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spell='" .. tostring(spell) .. "'")
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] rank='" .. tostring(rank) .. "'")
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spellRawName='" .. tostring(spellRawName) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] minRange='" .. tostring(minRange) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] maxRange='" .. tostring(maxRange) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellID='" .. tostring(spellId) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellBookType='" .. tostring(spellBookType) .. "'")
 
         if not rank then
             return false -- check if the player indeed knows this spell   maybe he hasnt specced for it
         end
 
-        local spellId, spellBookType = pfGetSpellIndex_(spellRawName) -- cache-aware
-        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellID='" .. tostring(spellId) .. "'")
-        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellBookType='" .. tostring(spellBookType) .. "'")
+        if not spellId then -- older versions of pfui dont return the spellid and booktype so we need to add an additional step 
+            spellId, spellBookType = pfGetSpellIndex_(spellRawName) -- cache-aware   todo   remove this around the end of 2025
+        end
 
         if not spellId then
             return false -- spell not found   shouldnt happen here but just in case
@@ -221,7 +233,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [isSpellUsable()] [getSpellCooldown_()] modRate='" .. tostring(modRate) .. "'")
         -- print("")
 
-        return usedAtTimestamp == 0 -- check if the spell is off cooldown
+        return
+        usedAtTimestamp == 0, -- check if the spell is off cooldown
+        minRange == 0 and maxRange == 0 and _non_self_castable_spells[spellRawName] == nil -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
     end
 
     local function setTargetIfNeededAndCast(
@@ -230,23 +244,27 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             proper_target,
             use_target_toggle_workaround
     )
-        _pfui_ui_mouseover.unit = proper_target
-
         local spellsArray = parseSpellsString(spellsString)
         
         local targetToggled = false
         local spellThatQualified
         local wasSpellCastSuccessful = false
         for _, spell in spellsArray do
-            if isSpellUsable(spell) then
-                if use_target_toggle_workaround and not targetToggled then
+            local canBeUsed, isSpellCastOnSelfOnly = isSpellUsable(spell)
+            if canBeUsed then
+                if use_target_toggle_workaround and not isSpellCastOnSelfOnly and not targetToggled then
                     targetToggled = true
-                    TargetUnit(proper_target)  
+                    TargetUnit(proper_target)
+                    _pfui_ui_mouseover.unit = proper_target
                 end
+                
+                local eventualTarget = isSpellCastOnSelfOnly
+                        and _player
+                        or proper_target
 
-                spellCastCallback(spell, proper_target) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+                spellCastCallback(spell, eventualTarget) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
-                if proper_target == _player then -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages   we live with this for now
+                if eventualTarget == _player then -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages   we live with this for now
                     spellThatQualified = spell
                     wasSpellCastSuccessful = true
                     break
