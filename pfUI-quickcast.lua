@@ -122,13 +122,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     
     local function onSelfCast(spellName, spellId, spellBookType, proper_target)
         CastSpellByName(spellName, 1)
-        -- CastSpell(spellId, spellBookType, 1) -- todo   experiment with this flavor and see if it works
     end
 
     local function onCast(spellName, spellId, spellBookType, proper_target)
         if proper_target == _player then
             CastSpellByName(spellName, 1) -- faster
-            -- CastSpell(spellId, spellBookType, 1) -- todo   experiment with this flavor and see if it works
             return
         end
         
