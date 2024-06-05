@@ -171,7 +171,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return unpack(results) -- matched with captures  ("Foo 11 bar   ping pong"):match("Foo (%d+) bar")
     end
 
-    local function strtrim(input)
+    local function _strtrim(input)
         return strmatch(input, '^%s*(.*%S)') or ''
     end
 
@@ -182,15 +182,23 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return spellsArray
         end
 
+        local spellsStringTrimmed = _strtrim(spellsString)
+        
+        spellsArray = _parsedSpellStringsCache[spellsStringTrimmed]
+        if spellsArray ~= nil then
+            return spellsArray
+        end
+
         spellsArray = {}
         for spell in string.gfind(spellsString, "%s*([^,]*[^,])%s*") do
-            spell = strtrim(spell)
+            spell = _strtrim(spell)
             if spell ~= "" then -- ignore empty strings
                 table.insert(spellsArray, spell)
             end
         end
 
         _parsedSpellStringsCache[spellsString] = spellsArray
+        _parsedSpellStringsCache[spellsStringTrimmed] = spellsArray
         return spellsArray
     end
     
