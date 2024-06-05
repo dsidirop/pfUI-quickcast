@@ -81,14 +81,6 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   
   /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light")     -- equivalent LUA call
   ```
-  
-  <br/>You can also use the ';' character as a separator:
-
-  ```
-  /pfquickcast@heal Holy Shock; Flash of Light;
-  
-  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock; Flash of Light;") -- equivalent LUA call
-  ```
 
   <br/>Note: The above feature can't be used as-is to fall back to lower ranks of the same spell if the first spell in the list is not castable due to low mana. If you want to achieve this
   one way to do it is this one:

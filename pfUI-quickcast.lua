@@ -183,7 +183,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         spellsArray = {}
-        for spell in string.gfind(spellsString, "%s*([^,;]*[^,;])%s*") do
+        for spell in string.gfind(spellsString, "%s*([^,]*[^,])%s*") do
             spell = strtrim(spell)
             if spell ~= "" then -- ignore empty strings
                 table.insert(spellsArray, spell)
