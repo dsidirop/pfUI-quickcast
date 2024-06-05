@@ -216,7 +216,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         spellsArray = {}
         for spell in strgfind_(spellsString, "%s*([^,]*[^,])%s*") do
             spell = _strtrim(spell)
-            if spell ~= "" then -- ignore empty strings
+            if spell and spell ~= "" then -- ignore empty strings
                 tableinsert_(spellsArray, spell)
             end
         end
