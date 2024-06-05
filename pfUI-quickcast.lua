@@ -19,11 +19,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region helpers
 
     local pairs_ = _G.pairs
+    local rawequal_ = _G.rawequal
+    
     local getCVar_ = _G.GetCVar
     local getSpellCooldown_ = _G.GetSpellCooldown
-    
+        
     local pfGetSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
-    local pfGetSpellIndex_ = _G.pfUI.api.libspell.GetSpellIndex
 
     local _pet = "pet"
     local _player = "player"
@@ -175,10 +176,22 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return strmatch(input, '^%s*(.*%S)') or ''
     end
 
+    local _lastUsedSpellsString
+    local _lastUsedSpellsArrayResult
     local _parsedSpellStringsCache = {}
     local function parseSpellsString(spellsString)
+        if rawequal_(spellsString, _lastUsedSpellsString) then -- very common, extremely fast and it saves us from a hefty table lookup right below
+            return _lastUsedSpellsArrayResult
+        end
+
+        if spellsString == nil then
+            return nil
+        end
+        
         local spellsArray = _parsedSpellStringsCache[spellsString]
         if spellsArray ~= nil then
+            _lastUsedSpellsString = spellsString
+            _lastUsedSpellsArrayResult = spellsArray
             return spellsArray
         end
 
@@ -186,6 +199,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         
         spellsArray = _parsedSpellStringsCache[spellsStringTrimmed]
         if spellsArray ~= nil then
+            _lastUsedSpellsString = spellsString
+            _lastUsedSpellsArrayResult = spellsArray
             return spellsArray
         end
 
@@ -197,6 +212,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
+        _lastUsedSpellsString = spellsString
+        _lastUsedSpellsArrayResult = spellsArray
         _parsedSpellStringsCache[spellsString] = spellsArray
         _parsedSpellStringsCache[spellsStringTrimmed] = spellsArray
         return spellsArray
@@ -251,6 +268,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             use_target_toggle_workaround
     )
         local spellsArray = parseSpellsString(spellsString)
+        if not spellsArray then
+            return nil
+        end
         
         local targetToggled = false
         local spellThatQualified
