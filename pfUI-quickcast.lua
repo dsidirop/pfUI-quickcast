@@ -210,15 +210,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spellRawName='" .. tostring(spellRawName) .. "'")
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] minRange='" .. tostring(minRange) .. "'")
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] maxRange='" .. tostring(maxRange) .. "'")
-        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellID='" .. tostring(spellId) .. "'")
-        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellIndex_()] spellBookType='" .. tostring(spellBookType) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spellID='" .. tostring(spellId) .. "'")
+        -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spellBookType='" .. tostring(spellBookType) .. "'")
 
         if not rank then
             return false -- check if the player indeed knows this spell   maybe he hasnt specced for it
-        end
-
-        if not spellId then -- older versions of pfui dont return the spellid and booktype so we need to add an additional step 
-            spellId, spellBookType = pfGetSpellIndex_(spellRawName) -- cache-aware   todo   remove this around the end of 2025
         end
 
         if not spellId then
