@@ -310,7 +310,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                     SpellTargetUnit(proper_target)
                 end
 
-                wasSpellCastSuccessful = not SpellIsTargeting() -- todo  test that spells on cooldown are not considered as successfully cast
+                wasSpellCastSuccessful = not SpellIsTargeting()
                 if wasSpellCastSuccessful then
                     spellThatQualified = spell
                     break
