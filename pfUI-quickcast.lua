@@ -277,6 +277,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         if not spellsArray then
             return nil
         end
+
+        -- it is obvious that there is no need to target toggle over to the desired target if we are already targeting it!
+        use_target_toggle_workaround = use_target_toggle_workaround and not UnitIsUnit(proper_target, _target)
         
         local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget
         local targetToggled, wasSpellCastSuccessful, spellThatQualified = false, false
@@ -421,7 +424,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             --00 mouse hovering directly over friendly player-toons in the game-world?
  
             if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster
-                return _toon_mouse_hover, false
+                return _toon_mouse_hover, true
             end
 
             local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(_toon_mouse_hover)
