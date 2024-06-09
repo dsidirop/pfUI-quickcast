@@ -18,7 +18,6 @@ pfUIQuickCast = _pfUIQuickCast:New() -- globally exported singleton symbol for t
 pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region helpers
 
-    local pcall_ = _G.pcall
     local pairs_ = _G.pairs
     local assert_ = _G.assert
     local unpack_ = _G.unpack
@@ -133,20 +132,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function _onCast(spellName, spellId, spellBookType, proper_target)
-        if proper_target == _player then
+        if rawequal_(proper_target, _player) then
             CastSpellByName(spellName, 1) -- faster
             return
         end
         
         local cvar_selfcast = getCVar_("AutoSelfCast")
-        if cvar_selfcast == "0" then
-            -- cast without selfcast cvar setting to allow spells to use spelltarget
+        if cvar_selfcast == "0" then          
             CastSpell(spellId, spellBookType) -- faster using spellid
             return
         end
-
-        setCVar_("AutoSelfCast", "0")
-        pcall_(CastSpell, spellId, spellBookType) -- faster using spellid
+        
+        setCVar_("AutoSelfCast", "0") -- cast without selfcast cvar setting to allow spells to use spelltarget
+        CastSpell(spellId, spellBookType) -- faster using spellid
         setCVar_("AutoSelfCast", cvar_selfcast)
     end
 
@@ -279,21 +277,21 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
         
-        local targetToggled = false
-        local spellThatQualified
-        local wasSpellCastSuccessful = false
+        local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget
+        local targetToggled, wasSpellCastSuccessful, spellThatQualified = false, false
         for _, spell in spellsArray do
-            local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly = _isSpellUsable(spell)
+            spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly = _isSpellUsable(spell)
             if canBeUsed then
                 if use_target_toggle_workaround and not isSpellCastOnSelfOnly and not targetToggled then
                     targetToggled = true
                     TargetUnit(proper_target)
-                    _pfui_ui_mouseover.unit = proper_target
                 end
-                
-                local eventualTarget = isSpellCastOnSelfOnly
+
+                eventualTarget = isSpellCastOnSelfOnly
                         and _player
                         or proper_target
+
+                _pfui_ui_mouseover.unit = eventualTarget
 
                 spellCastCallback(spell, spellId, spellBookType, eventualTarget) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
@@ -304,8 +302,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 end
 
                 if SpellIsTargeting() then
-                    -- if the spell is awaiting a target to be specified then set spell target to proper_target
-                    SpellTargetUnit(proper_target)
+                    -- if the spell is awaiting a target to be specified ...
+                    SpellTargetUnit(eventualTarget)
                 end
 
                 wasSpellCastSuccessful = not SpellIsTargeting()
@@ -407,8 +405,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         
         local unitOfFrameHovering = _tryGetUnitOfFrameHovering()
         if unitOfFrameHovering and UnitCanAssist(_player, unitOfFrameHovering) then
-            
-            local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- we need to check  
+            local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- we need to check
             if unitAsTeamUnit then
                 return unitAsTeamUnit, false
             end
