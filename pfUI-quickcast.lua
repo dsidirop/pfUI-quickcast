@@ -40,7 +40,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _toon_mouse_hover = "mouseover"
     local _target_of_target = "targettarget"
 
-    local _pfui_ui_mouseover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
+    local _pfui_ui_toon_mouse_hover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
 
     local _solo_spell_target_units = (function()
         local standardSpellTargets = { }
@@ -292,7 +292,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                         and _player
                         or proper_target
 
-                _pfui_ui_mouseover.unit = eventualTarget
+                _pfui_ui_toon_mouse_hover.unit = eventualTarget
 
                 spellCastCallback(spell, spellId, spellBookType, eventualTarget) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
@@ -319,7 +319,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             TargetLastTarget()
         end
 
-        _pfui_ui_mouseover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
+        _pfui_ui_toon_mouse_hover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
 
         if not wasSpellCastSuccessful then
             -- at this point if the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
@@ -356,11 +356,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         if unitstr or UnitIsUnit(_target, unit) then
             -- no target change required   we can either use spell target or the unit that is already our current target
-            _pfui_ui_mouseover.unit = (unitstr or _target)
-            return _pfui_ui_mouseover.unit, false
+            _pfui_ui_toon_mouse_hover.unit = (unitstr or _target)
+            return _pfui_ui_toon_mouse_hover.unit, false
         end
 
-        _pfui_ui_mouseover.unit = unit
+        _pfui_ui_toon_mouse_hover.unit = unit
         return unit, true -- target change required
 
         -- 00  if target and mouseover are friendly units we cant use spell target as it would cast on the target instead of the mouseover
@@ -408,23 +408,25 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         if unitOfFrameHovering and UnitCanAssist(_player, unitOfFrameHovering) then
             local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- we need to check
             if unitAsTeamUnit then
-                return unitAsTeamUnit, false
+                -- we need to use the target-swap hack here if the currently selected target is friendly   otherwise the
+                -- heals we cast via CastSpell and CastSpellByName will land on the currently selected friendly target ;(
+                return unitAsTeamUnit, UnitCanAssist(_player, _target)
             end
 
             return unit, true
         end
-        
-        -- UnitExists(_mouseover) no need to check this here
+
+        -- UnitExists(_toon_mouse_hover) no need to check this here
         if UnitCanAssist(_player, _toon_mouse_hover) and not UnitIsDeadOrGhost(_toon_mouse_hover) then
             --00 mouse hovering directly over friendly player-toons in the game-world?
-
-            if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster 
+ 
+            if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster
                 return _toon_mouse_hover, false
             end
-            
+
             local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(_toon_mouse_hover)
-            if unitAsTeamUnit then -- _mouseover -> "party1" or "raid1" etc   it is much more efficient this way in a team context compared to having to use target-swap hack
-                return unitAsTeamUnit, false
+            if unitAsTeamUnit then -- _toon_mouse_hover -> "party1" or "raid1" etc   it is much more efficient this way in a team context compared to having to use target-swap hack
+                return unitAsTeamUnit, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
             end
 
             return _toon_mouse_hover, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
@@ -442,7 +444,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         return nil, false -- no valid target found
 
-        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _mouseover) returns false but it doesnt matter really
+        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _toon_mouse_hover) returns false but it doesnt matter really
         --     since noone is using this kind of mousehover to heal himself
     end
 
@@ -588,7 +590,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         return nil, false -- no valid target found
 
-        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _mouseover) returns false but it doesnt matter really
+        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _toon_mouse_hover) returns false but it doesnt matter really
         --     since noone is using this kind of mousehover to heal himself
     end
 
