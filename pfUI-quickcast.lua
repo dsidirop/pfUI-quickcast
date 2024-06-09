@@ -58,9 +58,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _party_spell_target_units = (function()
         local standardSpellTargets = { }
 
-        tableinsert_(standardSpellTargets, _target) -- most common target so we check this first
-        tableinsert_(standardSpellTargets, _player)
-
         for i = 1, MAX_PARTY_MEMBERS do
             tableinsert_(standardSpellTargets, "party" .. i)
         end
@@ -80,8 +77,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local standardSpellTargets = { }
 
-        tableinsert_(standardSpellTargets, _target) -- most common target so we check this first
-
         for i = 1, MAX_PARTY_MEMBERS do
             tableinsert_(standardSpellTargets, "party" .. i)
         end
@@ -95,8 +90,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         for i = 1, MAX_RAID_MEMBERS do
             tableinsert_(standardSpellTargets, "raidpet" .. i)
         end
-
-        tableinsert_(standardSpellTargets, _player) -- these are the most rare mouse-hovering scenarios so we check them last
         
         -- tableinsert_(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
@@ -110,24 +103,29 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 or nil
     end
 
-    local function _tryTranslateUnitToStandardSpellTargetUnit(unit)
-        local properSpellTargetUnits = UnitInRaid(unit) and _raid_spell_target_units
-                or UnitInParty(unit) and _party_spell_target_units
+    local function _tryTranslateUnitToStandardSpellTargetUnit(unit) -- 00
+        if rawequal_(unit, _player) or rawequal_(unit, _target) or rawequal_(unit, _pet) then -- trivial cases
+            return unit
+        end
+
+        -- searching for pets and raid members that are being targeted via _target_of_target or _toon_mouse_hover
+        local properSpellTargetUnits = (UnitInRaid(_player) and _raid_spell_target_units)
+                or (GetNumPartyMembers() and _party_spell_target_units)
                 or _solo_spell_target_units
-        
+
         for _, spellTargetUnitName in pairs_(properSpellTargetUnits) do
-            if unit == spellTargetUnitName or UnitIsUnit(unit, spellTargetUnitName) then -- 00
+            if rawequal_(unit, spellTargetUnitName) then -- faster   we frequently get unit already formatted as "party1" or "raid1" etc
+                return spellTargetUnitName
+            end
+        end
+
+        for _, spellTargetUnitName in pairs_(properSpellTargetUnits) do
+            if UnitIsUnit(unit, spellTargetUnitName) then
                 return spellTargetUnitName
             end
         end
 
         return nil
-
-        --00  try to find a valid (friendly) unitstring that can be used for SpellTargetUnit(unit) to avoid another target switch
-        --    if the given unit (p.e. mouseover) and the partyX unit are the one and the same target then return partyX etc
-        --
-        --    even though the check 'unit == spellTargetUnitName' is performed inside UnitIsUnit() we still need to check it here first
-        --    because we want to avoid the function call to UnitIsUnit() altogether if the unit is the same as the spell target unit
     end
 
     local function _onSelfCast(spellName, spellId, spellBookType, proper_target)
