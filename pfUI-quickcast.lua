@@ -131,22 +131,25 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         CastSpellByName(spellName, 1)
     end
 
-    local _cvarAutoSelfCastOrig = getCVar_("AutoSelfCast")
-    local _cvarAutoSelfCastIsOff = rawequal_(_cvarAutoSelfCastOrig, "0")
+    local _cvarAutoSelfCastCached -- getCVar_("AutoSelfCast")  dont
     local function _onCast(spellName, spellId, spellBookType, proper_target)
         if rawequal_(proper_target, _player) then
             CastSpellByName(spellName, 1) -- faster
             return
         end
 
-        if _cvarAutoSelfCastIsOff then          
+        _cvarAutoSelfCastCached = _cvarAutoSelfCastCached == nil
+                and getCVar_("AutoSelfCast")
+                or _cvarAutoSelfCastCached
+
+        if rawequal_(_cvarAutoSelfCastCached, "0") then
             CastSpell(spellId, spellBookType) -- faster using spellid
             return
         end
         
         setCVar_("AutoSelfCast", "0") -- cast without selfcast cvar setting to allow spells to use spelltarget
         CastSpell(spellId, spellBookType) -- faster using spellid
-        setCVar_("AutoSelfCast", _cvarAutoSelfCastOrig)
+        setCVar_("AutoSelfCast", _cvarAutoSelfCastCached)
     end
 
     local function _strmatch(input, patternString, ...)
