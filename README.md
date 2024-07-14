@@ -4,8 +4,6 @@ The '/pfquickcast@*' family of commands are more performant flavours of the orig
 
 These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
-# 🚧 Work In Progress - Coming Soon 🚧
-
 ## ❓ Why pfUI-QuickCast?
 
 - **Performance**: The '/pfquickcast@heal' command is leaner and more performant than the original '/pfcast' command from pfUI.mouseover module.
