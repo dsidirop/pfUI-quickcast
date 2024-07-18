@@ -27,7 +27,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   is not aware of the target type and will cast 'Holy Shock' on the currently selected target if it's enemy prioritizing it over the friendly
   target that you intend to heal with mouse-over. :(
 
-  <br/>If someone wants to force '/pfcast' to cast 'Holy Shock' on the friendly mouse-over target (even if a enemy target is selected), they would have to
+  <br/>If someone wants to force '/pfcast' to cast 'Holy Shock' on the friendly mouse-over target (even if an enemy target is selected), they would have to
   resort to writing a LUA wrapper-script. This sort of "LUA heartburn" is no longer necessary with the '/pfquickcast@heal' command. 
 
   <br/>This is just one of the many issues plaguing the original '/pfcast' command that '/pfquickcast@heal' fixes right ouf of the box.
@@ -47,7 +47,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   With the '/pfquickcast@heal' approach if you decide to switch over to another heal-auto-ranking addon you don't have to edit any of your macros - simply switch
   over to your new heal-auto-ranking addon and everything will work transparently (provided of course that your new heal-auto-ranking addon supports /pfquickcast@heal indeed).<br/><br/>
 
-  Just for the sake of comparison, here's how '/pfcast' is meant to be used with heal auto-ranking addons:<br/>
+  Just for the sake of comparison, here's how the built-in '/pfcast' command is meant to be used with heal auto-ranking addons:<br/>
 
   ```
    /pfcast YourPreferredHealAutoRankingAddon:Cast("Holy Light")
@@ -120,7 +120,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
 - `/pfquickcast@healtote <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL_TOTE("<spell_name>")` )
 
-  <br/>Casts heals to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over a **enemy** unit in which case it will find the friendly target that it's attacking
+  <br/>Casts heals to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over an **enemy** unit in which case it will find the friendly target that it's attacking
   to heal it.
 
   <br/>- Note that this flavour will automatically **change** your current target to the enemy unit you're mouse-hovering over. Use with caution.
@@ -128,7 +128,7 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>- This flavour is meant to be used mainly when healing boss-fights that necessitate tank swaps, in which case you want your heals to land automatically on the tank that the boss is currently
   attacking at any given moment.<br/>
 
-  <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a enemy one.<br/>
+  <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or an enemy one.<br/>
 
   ```                                                        
   -- you can bind this macro to your scroll-wheel-up/down for effective spam healing via mouse-hover
@@ -195,10 +195,10 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   - Always track & attack the tank's current target.<br/>
   - It's also useful in **multi-boxing scenarios** where you want your follower-chars to always attack the target of your leading char.<br/><br/>
 
-  You can even combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or a enemy one.<br/>
+  You can even combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or an enemy one.<br/>
 
   ```
-  /pfquickcast@enemy    Frostbolt   -- if you mouse-hover over a enemy target or if you dont mouse-hover anything but you have an enemy already selected
+  /pfquickcast@enemy    Frostbolt   -- if you mouse-hover over an enemy target or if you dont mouse-hover anything but you have an enemy already selected
   /pfquickcast@enemytbf Frostbolt   -- if you mouse-hover over a friendly target your spells will be sent to the enemy target that your friend is attacking
   ```
 
