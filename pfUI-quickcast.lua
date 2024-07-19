@@ -702,6 +702,53 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@healtote
 
+    -- region /pfquickcast@intervene
+
+    local function _deduceIntendedTarget_forIntervene()
+
+        if not UnitIsFriend(_player, _target)
+                and UnitCanAssist(_player, _target_of_target)
+                and not UnitIsUnit(_player, _target_of_target)
+                and not UnitIsDead(_target_of_target) then
+
+            local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
+            if unitAsTeamUnit then
+                return unitAsTeamUnit, false
+            end
+
+            return _target_of_target, true -- free world pvp situations without raid
+        end
+
+        return nil, false -- no valid target found
+    end
+
+    _G.SLASH_PFQUICKCAST_INTERVENE1 = "/pfquickcast@intervene"
+    _G.SLASH_PFQUICKCAST_INTERVENE2 = "/pfquickcast:intervene"
+    _G.SLASH_PFQUICKCAST_INTERVENE3 = "/pfquickcast.intervene"
+    _G.SLASH_PFQUICKCAST_INTERVENE4 = "/pfquickcast_intervene"
+    _G.SLASH_PFQUICKCAST_INTERVENE5 = "/pfquickcastintervene"
+    function SlashCmdList.PFQUICKCAST_INTERVENE(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround  = _deduceIntendedTarget_forIntervene()
+        if proper_target == nil then
+            return nil
+        end
+
+        return _setTargetIfNeededAndCast(
+                _onCast, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround
+        )
+    end
+
+    -- endregion /pfquickcast@intervene
+
     -- region /pfquickcast@enemytbf
 
     local function _deduceIntendedTarget_forEnemyTargetedByFriend()

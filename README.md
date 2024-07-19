@@ -117,7 +117,6 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   <br/>Note: Heals cast with this flavour do get intercepted by healing auto-ranking addons.<br/><br/>
 
-
 - `/pfquickcast@healtote <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL_TOTE("<spell_name>")` )
 
   <br/>Casts heals to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over an **enemy** unit in which case it will find the friendly target that it's attacking
@@ -165,6 +164,24 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>Note that (normally) this flavour is not interceptable by heal-auto-ranking addons and should be used for spells that are meant to be cast
   exactly as you specify them on friendly targets.<br/><br/>
 
+- `/pfquickcast@intervene <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_INTERVENE("<spell_name>")` )
+
+  <br/>Using this command while targeting an enemy will cast the given spell to the friendly player (other than yourself) targeted by the enemy unit.
+
+  This is useful for situations where you want to cast spells like "Blessing of Protection" on a party member that's being attacked by a boss but you
+  want to make sure that you will not accidentally cast blessing of protection on yourself!
+
+  Although you can heal with this command bare in mind that said heals, normally, do not be intercepted by heal-auto-ranking addons and are cast as given.
+
+  ```
+  /pfquickcast@intervene   Blessing of Protection
+  ```
+  
+  Or in LUA:
+
+  ```lua
+  SlashCmdList.PFQUICKCAST_INTERVENE("Blessing of Protection")
+  ```
 
 - `/pfquickcast@enemy <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ENEMY("<spell_name>")` )
 
