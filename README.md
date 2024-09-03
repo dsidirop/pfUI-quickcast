@@ -259,7 +259,7 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
                                                          
   This is a fork of the original SmartHealer addon which supports the '/pfquickcast@heal*' commands among other QoL changes.
 
-  The original one can be found here [SmartHealer (original)](https://github.com/melbaa/SmartHealer).
+  The original one can be found here [SmartHealer (original)](https://github.com/melbaa/SmartHealer) and doesn't support '/pfquickcast@heal*' commands.
 
 
 ## 🟡  Credits
