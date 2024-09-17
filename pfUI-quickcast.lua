@@ -65,6 +65,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             tableinsert_(standardSpellTargets, "partypet" .. i)
         end
 
+        tableinsert_(standardSpellTargets, "player") -- vital to add this one as well because as it turns out party1->4 doesnt match properly with UnitIsUnit()
+
         -- tableinsert_(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
         return standardSpellTargets
@@ -89,6 +91,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         for i = 1, MAX_RAID_MEMBERS do
             tableinsert_(standardSpellTargets, "raidpet" .. i)
         end
+
+        tableinsert_(standardSpellTargets, "player") -- vital to add this as well
         
         -- tableinsert_(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
@@ -267,14 +271,16 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         spellId,
         spellBookType,
         usedAtTimestamp == 0, -- check if the spell is off cooldown
-        minRange == 0 and maxRange == 0 and _non_self_castable_spells[spellRawName] == nil -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
+        minRange == 0 and maxRange == 0 and _non_self_castable_spells[spellRawName] == nil,
+        spellRawName -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
     end
 
     local function _setTargetIfNeededAndCast(
             spellCastCallback,
             spellsString,
             proper_target,
-            use_target_toggle_workaround
+            use_target_toggle_workaround,
+            intention_is_to_assist_friendly_target
     )
         local spellsArray = _parseSpellsString(spellsString)
         if not spellsArray then
@@ -284,14 +290,20 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- it is obvious that there is no need to target toggle over to the desired target if we are already targeting it!
         use_target_toggle_workaround = use_target_toggle_workaround and not UnitIsUnit(proper_target, _target)
         
-        local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget
-        local targetToggled, wasSpellCastSuccessful, spellThatQualified = false, false
+        local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget, spellRawName
+        local targetWasToggled, wasSpellCastSuccessful, spellThatQualified = false, false, nil
         for _, spell in spellsArray do
-            spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly = _isSpellUsable(spell)
+            spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, spellRawName = _isSpellUsable(spell)
+
             if canBeUsed then
-                if use_target_toggle_workaround and not isSpellCastOnSelfOnly and not targetToggled then
-                    targetToggled = true
-                    TargetUnit(proper_target)
+                if not targetWasToggled and not isSpellCastOnSelfOnly then
+                    -- unfortunately holy shock is buggy when an enemy is targeted   it will cast on the enemy instead of the friendly target
+                    if use_target_toggle_workaround or (
+                            intention_is_to_assist_friendly_target and spellRawName == "Holy Shock" and not UnitIsFriend(_player, _target)
+                    ) then
+                        targetWasToggled = true
+                        TargetUnit(proper_target)
+                    end
                 end
 
                 eventualTarget = isSpellCastOnSelfOnly
@@ -321,7 +333,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
-        if targetToggled then
+        if targetWasToggled then
             TargetLastTarget()
         end
 
@@ -438,20 +450,18 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return _toon_mouse_hover, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
         end
 
-        if UnitCanAssist(_player, _target) then
-            -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not
+        if UnitCanAssist(_player, _target) then -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not            
             return _target, false
         end
 
-        if UnitCanAssist(_player, _target_of_target) then
-            -- at this point the current target is not a friendly unit so we try to heal the target of the target   useful fallback behaviour both when soloing and when raid healing
+        if UnitCanAssist(_player, _target_of_target) then -- at this point the current target is not a friendly unit so we try to heal the target of the target   useful fallback behaviour both when soloing and when raid healing
             return _target_of_target, false
         end
 
         return nil, false -- no valid target found
 
-        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _toon_mouse_hover) returns false but it doesnt matter really
-        --     since noone is using this kind of mousehover to heal himself
+        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _toon_mouse_hover) returns false
+        --     but it doesnt matter really since noone is using this kind of mousehover to heal himself
     end
 
     _G.SLASH_PFQUICKCAST_HEAL1 = "/pfquickcast@heal"
@@ -475,7 +485,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
                 spellsString,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                true -- setting intention_is_to_assist_friendly_target=true is vital to set this for certain corner cases
         )
     end
 
@@ -495,7 +506,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
                 spellsString,
                 _player,
-                false
+                false,
+                true -- setting intention_is_to_assist_friendly_target=true is vital to set this for certain corner cases
         )
     end
 
@@ -548,7 +560,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast,
                 spellsString,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                true -- setting intention_is_to_assist_friendly_target=true is vital to set this for certain corner cases
         )
     end
 
@@ -632,7 +645,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local function _deduceIntendedTarget_forFriendlyTargetOfTheEnemy()
 
-        local gotEnemyCandidateFromMouseHover = false
+        local gotEnemyCandidateFromMouseFrameHovering = false
 
         local unitOfFrameHovering = _tryGetUnitOfFrameHovering()
         if unitOfFrameHovering and not UnitIsUnit(unitOfFrameHovering, _target) then
@@ -643,7 +656,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return nil, false
             end
 
-            gotEnemyCandidateFromMouseHover = true
+            gotEnemyCandidateFromMouseFrameHovering = true
             TargetUnit(unitOfFrameHovering)
 
         elseif UnitExists(_toon_mouse_hover) and not UnitIsUnit(_toon_mouse_hover, _target) then
@@ -653,11 +666,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 return nil, false
             end
 
-            gotEnemyCandidateFromMouseHover = true
+            gotEnemyCandidateFromMouseFrameHovering = true
             TargetUnit(_toon_mouse_hover)
         end
 
-        if (gotEnemyCandidateFromMouseHover or not UnitIsFriend(_player, _target))
+        if (gotEnemyCandidateFromMouseFrameHovering or not UnitIsFriend(_player, _target))
                 and UnitCanAssist(_player, _target_of_target)
                 and not UnitIsDead(_target_of_target) then
             local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
@@ -668,7 +681,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return _target_of_target, true -- free world pvp situations without raid
         end
         
-        if gotEnemyCandidateFromMouseHover then
+        if gotEnemyCandidateFromMouseFrameHovering then
             TargetLastTarget()
         end
 
@@ -696,7 +709,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
                 spellsString,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                true -- setting intention_is_to_assist_friendly_target=true is vital to set this for certain corner cases
         )
     end
 
@@ -743,7 +757,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
                 spellsString,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                true -- setting intention_is_to_assist_friendly_target=true is vital to set this for certain corner cases
         )
     end
 
