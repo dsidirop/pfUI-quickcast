@@ -147,6 +147,35 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   ```
   <br/>
 
+- `/pfquickcast@friendtote <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIEND_TOTE("<spell_name>")` )
+
+  <br/>Casts the spell specified to the target-of-the-enemy (tote). This will work **only** if you're mouse-hovering over an **enemy** unit in which case it will find the friendly target that it's attacking
+  to heal it.
+
+  <br/>- Note that this flavour will automatically **change** your current target to the enemy unit you're mouse-hovering over. Use with caution.
+
+  <br/>- This flavour is meant to be used mainly for non-healing spells or for healing spells that you want to be cast as-is (without being processed by auto-ranking addons).<br/>
+
+  <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or an enemy one.<br/>
+
+  ```                                                        
+  -- you can bind this macro to your scroll-wheel-up/down for effective spam healing via mouse-hover
+
+  /pfquickcast@friend       Blessing of Protection
+  /pfquickcast@friendtote   Blessing of Protection
+  ```
+
+  ```lua
+  SlashCmdList.PFQUICKCAST_FRIEND("Blessing of Protection")
+  SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Blessing of Protection")
+  ```
+  <br/>Or as a one-liner:
+
+  ```
+  /script SlashCmdList.PFQUICKCAST_FRIEND("Blessing of Protection"); SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Blessing of Protection");
+  ```
+  <br/>
+
 - `/pfquickcast@self <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_SELF("<spell_name>")` )
 
   <br/>Casts spells on your **character** no matter what.

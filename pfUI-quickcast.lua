@@ -131,7 +131,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         return nil
     end
 
-    local function _onSelfCast(spellName, spellId, spellBookType, proper_target)
+    local function _onSelfCast(spellName, _, _, _)
         CastSpellByName(spellName, 1)
     end
 
@@ -649,7 +649,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local unitOfFrameHovering = _tryGetUnitOfFrameHovering()
         if unitOfFrameHovering and not UnitIsUnit(unitOfFrameHovering, _target) then
-
             if not UnitExists(unitOfFrameHovering) --                  unit-frames mouse-hovering   
                     or UnitIsFriend(_player, unitOfFrameHovering) --   we check that the mouse-hover unit-frame is alive and enemy
                     or UnitIsDeadOrGhost(unitOfFrameHovering) then --  if its not then we guard close
@@ -660,7 +659,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             TargetUnit(unitOfFrameHovering)
 
         elseif UnitExists(_toon_mouse_hover) and not UnitIsUnit(_toon_mouse_hover, _target) then
-
             if UnitIsFriend(_player, _toon_mouse_hover) --   is the mouse hovering directly over a enemy toon in the game world?
                     or UnitIsDead(_toon_mouse_hover) then -- we check if its enemy and alive   if its not we guard close
                 return nil, false
@@ -716,6 +714,36 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@healtote
 
+    -- region /pfquickcast@friendtote
+    
+    _G.SLASH_PFQUICKCAST_FRIEND_TOTE1 = "/pfquickcast@friendtote"
+    _G.SLASH_PFQUICKCAST_FRIEND_TOTE2 = "/pfquickcast:friendtote"
+    _G.SLASH_PFQUICKCAST_FRIEND_TOTE3 = "/pfquickcast.friendtote"
+    _G.SLASH_PFQUICKCAST_FRIEND_TOTE4 = "/pfquickcast_friendtote"
+    _G.SLASH_PFQUICKCAST_FRIEND_TOTE5 = "/pfquickcastfriendtote"
+    function SlashCmdList.PFQUICKCAST_FRIEND_TOTE(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround  = _deduceIntendedTarget_forFriendlyTargetOfTheEnemy()
+        if proper_target == nil then
+            return nil
+        end
+
+        return _setTargetIfNeededAndCast(
+                _onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround,
+                true -- setting intention_is_to_assist_friendly_target=true is vital to set this for certain corner cases
+        )
+    end
+    
+    -- endregion /pfquickcast@friendtote
+
     -- region /pfquickcast@intervene
 
     local function _deduceIntendedTarget_forIntervene()
@@ -754,7 +782,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         return _setTargetIfNeededAndCast(
-                _onCast, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                _onCast,
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
