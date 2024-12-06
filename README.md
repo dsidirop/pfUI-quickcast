@@ -2,61 +2,31 @@
 
 The '/pfquickcast@*' family of commands are more performant flavours of the original '/pfcast' command from pfUI.mouseover module.
 
-These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
+They are designed to be used in macros for casting spells on friendly, enemy or neutral targets in a more efficient and intuitive way
+while taking into account those corner-cases that the original '/pfcast' command has a very hard time dealing with properly.
 
-## ❓ Why pfUI-QuickCast?
+## 🏗️  Installation
 
-- **Performance**: The '/pfquickcast@heal' command is leaner and more performant than the original '/pfcast' command from pfUI.mouseover module.
+1. Download the **[latest version](https://github.com/dsidirop/pfUI-quickcast/archive/refs/heads/main.zip)**
+2. Unpack the .zip file
+3. Rename the folder "pfUI-quickcast-main" → "pfUI-quickcast"
+4. Copy "pfUI-quickcast" into
 
-  <br/>The original implementation of '/pfcast' command constantly invokes 'loadstring()' under the hood to evaluate the spell name string passed to it.
-  Even though this works fine for most cases, it's just too much churning for too little gain when used in macros that are executed frequently
-  such as healing macros that healers spam in a raid context:<br/><br/>
+       <Your Warcraft Directory>\Interface\AddOns
 
-  'Flash of Light'<br/>
-  Down-ranked 'Healing Touch'<br/>
-  'Rejuvenation'<br/>
+5. Restart World of Warcraft
 
-  <br/>One could argue that /pfcast could be refactored further so that 'loadstring()' could be wrapped and made smarter with some sort of caching mechanism
-  for the most commonly used LUA scripts passed to it, but that's just feels as flogging an ailing horse.<br/><br/>
+## 🚑  Heal-Auto-Ranking Addons Supporting '/pfquickcast@heal*' Commands
 
-- **Intention**: The '/pfquickcast@heal' command and only that is intercept-able by healing auto-ranking addons for optimum performance.<br/><br/>
+List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
 
-- **Targeting**: The implementation of the '/pfquickcast@heal' is such that it only casts spells on **friendly** targets.<br/>
+- [SmartHealer (extended)](https://github.com/dsidirop/SmartHealer):
 
-  <br/>This is important for spells like 'Holy Shock' that can be used on both friendly and enemy targets. The '/pfcast' command on the contrary
-  is not aware of the target type and will cast 'Holy Shock' on the currently selected target if it's enemy prioritizing it over the friendly
-  target that you intend to heal with mouse-over. :(
+  This is a fork of the original SmartHealer addon which supports the '/pfquickcast@heal*' commands among other QoL changes.
 
-  <br/>If someone wants to force '/pfcast' to cast 'Holy Shock' on the friendly mouse-over target (even if an enemy target is selected), they would have to
-  resort to writing a LUA wrapper-script. This sort of "LUA heartburn" is no longer necessary with the '/pfquickcast@heal' command. 
+  Note: The original one can be found here [SmartHealer (original)](https://github.com/melbaa/SmartHealer) and doesn't support '/pfquickcast@heal*' commands.
 
-  <br/>This is just one of the many issues plaguing the original '/pfcast' command that '/pfquickcast@heal' fixes right ouf of the box.
-
-
-- **Simplicity of Integration with Heal-Auto Ranking Addons**: The '/pfquickcast@heal' command works seamlessly and transparently with heal-auto-ranking
-  addons that support it.<br/><br/>
-
-  Unless you want to do something very advanced using your own custom LUA macro-script, there's absolutely no need to write counter-intuitive LUA scripts.<br/><br/>
-
-  This is how simply '/pfquickcast@heal' is meant to be used with heal auto-ranking addons:<br/>
-
-  ```
-   /pfquickcast@heal Holy Light   -- the heal auto-ranking addon will intercept this call and cast the most appropriate rank of 'Holy Light' based on the target's health
-  ```
-
-  With the '/pfquickcast@heal' approach if you decide to switch over to another heal-auto-ranking addon you don't have to edit any of your macros - simply switch
-  over to your new heal-auto-ranking addon and everything will work transparently (provided of course that your new heal-auto-ranking addon supports /pfquickcast@heal indeed).<br/><br/>
-
-  Just for the sake of comparison, here's how the built-in '/pfcast' command is meant to be used with heal auto-ranking addons:<br/>
-
-  ```
-   /pfcast YourPreferredHealAutoRankingAddon:Cast("Holy Light")
-  ```
-  
-  Apart from an alienating syntax, this approach means that if you decide to switch over to another heal-auto-ranking addon **you're forced into "LUA heartburn" by having to manually
-  edit all your macros** to reflect the new heal-auto-ranking addon's API.<br/><br/>
-
-## 🕮  Basic Usage:
+## 📜 Basic Usage:
 
 - `/pfquickcast@heal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL("<healing_spell_name>")` )
 
@@ -75,12 +45,12 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
   <br/>A typical use-case of this feature is with the Paladin's 'Holy Shock' talent:
 
   ```
-  /pfquickcast@heal Holy Shock, Flash of Light      -- if you have the 'Holy Shock' talent in your talent build and it is off cooldown, it will be cast, otherwise 'Flash of Light' will be cast
+  /pfquickcast@heal Holy Shock, Flash of Light(Rank 3)     -- if you have the 'Holy Shock' talent in your talent build and it is off cooldown, it will be cast, otherwise 'Flash of Light' will be cast
   
-  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light")     -- equivalent LUA call
+  /script SlashCmdList.PFQUICKCAST_HEAL("Holy Shock, Flash of Light(Rank 3)")     -- equivalent LUA call
   ```
 
-  <br/>Note: The above feature can't be used as-is to fall back to lower ranks of the same spell if the first spell in the list is not castable due to low mana. If you want to achieve this
+  <br/>Notes: The above feature can't be used as-is to fall back to lower ranks of the same spell if the first spell in the list is not castable due to low mana. If you want to achieve this
   one way to do it is this one:
  
   ```
@@ -265,31 +235,57 @@ These commands work only in Vanilla Warcraft 1.12 and its family of derivatives.
 
   <br/>Casts spells to any target (friendly, neutral or enemy) p.e. on pfUI frames via mouse-hover.<br/>
 
+## ❓ Why pfUI-QuickCast?
+
+- **Performance**: The '/pfquickcast@heal' command is leaner and more performant than the original '/pfcast' command from pfUI.mouseover module.
+
+  <br/>The original implementation of '/pfcast' command constantly invokes 'loadstring()' under the hood to evaluate the spell name string passed to it.
+  Even though this works fine for most cases, it's just too much churning for too little gain when used in macros that are executed frequently
+  such as healing macros that healers spam in a raid context:<br/><br/>
+
+  'Flash of Light'<br/>
+  Down-ranked 'Healing Touch'<br/>
+  'Rejuvenation'<br/>
+
+  <br/>One could argue that /pfcast could be refactored further so that 'loadstring()' could be wrapped and made smarter with some sort of caching mechanism
+  for the most commonly used LUA scripts passed to it, but that's just feels as flogging an ailing horse.<br/><br/>
+
+- **Intention**: The '/pfquickcast@heal' command and only that is intercept-able by healing auto-ranking addons for optimum performance.<br/><br/>
+
+- **Targeting**: The implementation of the '/pfquickcast@heal' is such that it only casts spells on **friendly** targets.<br/>
+
+  <br/>This is important for spells like 'Holy Shock' that can be used on both friendly and enemy targets. The '/pfcast' command on the contrary
+  is not aware of the target type and will cast 'Holy Shock' on the currently selected target if it's enemy prioritizing it over the friendly
+  target that you intend to heal with mouse-over. :(
+
+  <br/>If someone wants to force '/pfcast' to cast 'Holy Shock' on the friendly mouse-over target (even if an enemy target is selected), they would have to
+  resort to writing a LUA wrapper-script. This sort of "LUA heartburn" is no longer necessary with the '/pfquickcast@heal' command.
+
+  <br/>This is just one of the many issues plaguing the original '/pfcast' command that '/pfquickcast@heal' fixes right ouf of the box.
 
 
-## 🏗️  Installation
+- **Simplicity of Integration with Heal-Auto Ranking Addons**: The '/pfquickcast@heal' command works seamlessly and transparently with heal-auto-ranking
+  addons that support it.<br/><br/>
 
-1. Download the **[latest version](https://github.com/dsidirop/pfUI-quickcast/archive/refs/heads/main.zip)**
-2. Unpack the .zip file
-3. Rename the folder "pfUI-quickcast-main" → "pfUI-quickcast"
-4. Copy "pfUI-quickcast" into
+  Unless you want to do something very advanced using your own custom LUA macro-script, there's absolutely no need to write counter-intuitive LUA scripts.<br/><br/>
 
-       <Your Warcraft Directory>\Interface\AddOns
+  This is how simply '/pfquickcast@heal' is meant to be used with heal auto-ranking addons:<br/>
 
-5. Restart World of Warcraft
+  ```
+   /pfquickcast@heal Holy Light   -- the heal auto-ranking addon will intercept this call and cast the most appropriate rank of 'Holy Light' based on the target's health
+  ```
 
+  With the '/pfquickcast@heal' approach if you decide to switch over to another heal-auto-ranking addon you don't have to edit any of your macros - simply switch
+  over to your new heal-auto-ranking addon and everything will work transparently (provided of course that your new heal-auto-ranking addon supports /pfquickcast@heal indeed).<br/><br/>
 
+  Just for the sake of comparison, here's how the built-in '/pfcast' command is meant to be used with heal auto-ranking addons:<br/>
 
-## 💡  Heal-Auto-Ranking Addons Supporting '/pfquickcast@heal*' Commands    
+  ```
+   /pfcast YourPreferredHealAutoRankingAddon:Cast("Holy Light")
+  ```
 
-List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
-                         
-- [SmartHealer (forked)](https://github.com/dsidirop/SmartHealer):
-                                                         
-  This is a fork of the original SmartHealer addon which supports the '/pfquickcast@heal*' commands among other QoL changes.
-
-  The original one can be found here [SmartHealer (original)](https://github.com/melbaa/SmartHealer) and doesn't support '/pfquickcast@heal*' commands.
-
+  Apart from an alienating syntax, this approach means that if you decide to switch over to another heal-auto-ranking addon **you're forced into "LUA heartburn" by having to manually
+  edit all your macros** to reflect the new heal-auto-ranking addon's API.<br/><br/>
 
 ## 🟡  Credits
 
