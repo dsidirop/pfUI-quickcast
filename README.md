@@ -262,7 +262,7 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
   <br/>This is just one of the many issues plaguing the original '/pfcast' command that '/pfquickcast@heal' fixes right ouf of the box.
 
 
-- **Simplicity of Integration with Heal-Auto Ranking Addons**: The '/pfquickcast@heal' command works seamlessly and transparently with heal-auto-ranking
+- **Simplicity of Integration with Heal-Auto Ranking Addons**: The '/pfquickcast@heal*' commands work seamlessly and transparently with heal-auto-ranking
   addons that support it.<br/><br/>
 
   Unless you want to do something very advanced using your own custom LUA macro-script, there's absolutely no need to write counter-intuitive LUA scripts.<br/><br/>
@@ -273,8 +273,8 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
    /pfquickcast@heal Holy Light   -- the heal auto-ranking addon will intercept this call and cast the most appropriate rank of 'Holy Light' based on the target's health
   ```
 
-  With the '/pfquickcast@heal' approach if you decide to switch over to another heal-auto-ranking addon you don't have to edit any of your macros - simply switch
-  over to your new heal-auto-ranking addon and everything will work transparently (provided of course that your new heal-auto-ranking addon supports /pfquickcast@heal indeed).<br/><br/>
+  By relying on the '/pfquickcast@heal*' commands you can be sure that if you ever switch over to another heal-auto-ranking addon you don't have to edit any of your macros - simply switch
+  over to your new heal-auto-ranking addon and everything will work transparently (provided of course that your new heal-auto-ranking addon supports /pfquickcast indeed).<br/><br/>
 
   Just for the sake of comparison, here's how the built-in '/pfcast' command is meant to be used with heal auto-ranking addons:<br/>
 
@@ -283,7 +283,7 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
   ```
 
   Apart from an alienating syntax, this approach means that if you decide to switch over to another heal-auto-ranking addon **you're forced into "LUA heartburn" by having to manually
-  edit all your macros** to reflect the new heal-auto-ranking addon's API.<br/><br/>
+  edit all your macros** to reflect the new heal-auto-ranking addon's API (yikes!)<br/><br/>
 
 ## 🟡  Credits
 
