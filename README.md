@@ -235,7 +235,7 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
 
 ## ❓ Why pfUI-QuickCast?
 
-- **Performance**: The '/pfquickcast@heal' command is leaner and more performant than the original '/pfcast' command from pfUI.mouseover module.
+- **Performance**: The '/pfquickcast@heal*' commands are leaner and more performant than the original '/pfcast' command from pfUI.mouseover module.
 
   <br/>The original implementation of '/pfcast' command constantly invokes 'loadstring()' under the hood to evaluate the spell name string passed to it.
   Even though this works fine for most cases, it's just too much churning for too little gain when used in macros that are executed frequently
@@ -248,13 +248,13 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
   <br/>One could argue that /pfcast could be refactored further so that 'loadstring()' could be wrapped and made smarter with some sort of caching mechanism
   for the most commonly used LUA scripts passed to it, but that's just feels as flogging an ailing horse.<br/><br/>
 
-- **Intention**: The '/pfquickcast@heal' command and only that is intercept-able by healing auto-ranking addons for optimum performance.<br/><br/>
+- **Intention**: The '/pfquickcast@heal*' commands are interceptable by healing auto-ranking addons for optimum performance.<br/><br/>
 
 - **Targeting**: The implementation of the '/pfquickcast@heal' is such that it only casts spells on **friendly** targets.<br/>
 
   <br/>This is important for spells like 'Holy Shock' that can be used on both friendly and enemy targets. The '/pfcast' command on the contrary
-  is not aware of the target type and will cast 'Holy Shock' on the currently selected target if it's enemy prioritizing it over the friendly
-  target that you intend to heal with mouse-over. :(
+  is not aware of the target type and will (ironically enough) cast 'Holy Shock' on the currently selected target even if it's an enemy thus prioritizing the
+  offensive use of this spell instead of healing the friendly target that you intended to heal via mouse-over via the raid-frames. :(
 
   <br/>If someone wants to force '/pfcast' to cast 'Holy Shock' on the friendly mouse-over target (even if an enemy target is selected), they would have to
   resort to writing a LUA wrapper-script. This sort of "LUA heartburn" is no longer necessary with the '/pfquickcast@heal' command.
