@@ -168,7 +168,7 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
   This is useful for situations where you want to cast spells like "Blessing of Protection" on a party member that's being attacked by a boss but you
   want to make sure that you will not accidentally cast blessing of protection on yourself!
 
-  Although you can heal with this command bare in mind that said heals, normally, do not be intercepted by heal-auto-ranking addons and are cast as given.
+  Although you can heal with this command bare in mind that said heals, normally, do not get intercepted by heal-auto-ranking addons and are cast as-is.
 
   ```
   /pfquickcast@intervene   Blessing of Protection
