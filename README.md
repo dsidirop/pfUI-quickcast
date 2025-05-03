@@ -129,18 +129,18 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
   <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or an enemy one.<br/>
 
   ```
-  /pfquickcast@friend       Blessing of Protection
-  /pfquickcast@friendtote   Blessing of Protection
+  /pfquickcast@friend       Blessing of Freedom
+  /pfquickcast@friendtote   Blessing of Freedom
   ```
 
   ```lua
-  SlashCmdList.PFQUICKCAST_FRIEND("Blessing of Protection")
-  SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Blessing of Protection")
+  SlashCmdList.PFQUICKCAST_FRIEND("Blessing of Freedom")
+  SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Blessing of Freedom")
   ```
   <br/>Or as a one-liner:
 
   ```
-  /script SlashCmdList.PFQUICKCAST_FRIEND("Blessing of Protection"); SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Blessing of Protection");
+  /script SlashCmdList.PFQUICKCAST_FRIEND("Blessing of Freedom"); SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Blessing of Freedom");
   ```
   <br/>
 
