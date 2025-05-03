@@ -128,9 +128,7 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
 
   <br/>- You can combine this flavour with others so that it will do the right thing depending on whether you mouse-hover a friendly target or an enemy one.<br/>
 
-  ```                                                        
-  -- you can bind this macro to your scroll-wheel-up/down for effective spam healing via mouse-hover
-
+  ```
   /pfquickcast@friend       Blessing of Protection
   /pfquickcast@friendtote   Blessing of Protection
   ```
