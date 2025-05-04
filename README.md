@@ -62,7 +62,8 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
 | `/pfquickcast@enemytbf Frostbolt`             | `SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")`             | Casts given spell(s) on enemy targeted-by-friendly; changes target to said enemy unit. |
 | `/pfquickcast@intervene Hand of Protection`   | `SlashCmdList.PFQUICKCAST_INTERVENE("Hand of Protection")`    | Casts given spell(s) on friendly player targeted by enemy.                             |
 | `/pfquickcast@friendtote Holy Light (Rank 6)` | `SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Holy Light (Rank 6)")` | Casts given spell(s) on friendly target of enemy.                                      |
-| `/pfquickcast@directenemy Frostbolt`          | `SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("Frostbolt")`          | Casts given spell(s) on current enemy unit (intentionally omits mouse-over.)           |
+| `/pfquickcast@directenemy Frostbolt`          | `SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("Frostbolt")`          | Casts given spell(s) on current enemy unit (intentionally ignoring mouse-over.)        |
+| `/pfquickcast@friendcorpse Redemption`        | `SlashCmdList.PFQUICKCAST_FRIEND_CORPSE("Redemption")`        | Casts given spell(s) on current friendly dead unit.                                    |
 
 
 ## 📜 Analysis:
@@ -271,6 +272,10 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
 - `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 
   <br/>Casts spells to any target (friendly, neutral or enemy) p.e. on pfUI frames via mouse-hover.<br/>
+
+- `/pfquickcast@friendcorpse <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIEND_CORPSE("<spell_name>")` )
+
+  <br/>Casts a spell to friendly unit's corpse p.e. on pfUI frames via mouse-hover.<br/>
 
 ## ❓ Why pfUI-QuickCast?
 

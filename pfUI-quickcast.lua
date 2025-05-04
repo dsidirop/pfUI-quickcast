@@ -567,6 +567,75 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@friend
 
+    -- region /pfquickcast@friendcorpse
+
+    local function _deduceIntendedTarget_forFriendlyCorpseSpells()
+
+        local unitOfFrameHovering = _tryGetUnitOfFrameHovering()
+        if unitOfFrameHovering and UnitIsDeadOrGhost(unitOfFrameHovering) and UnitCanAssist(_player, unitOfFrameHovering) then
+            local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- we need to check
+            if unitAsTeamUnit then
+                -- we need to use the target-swap hack here if the currently selected target is friendly   otherwise the
+                -- spells we cast via CastSpell and CastSpellByName will land on the currently selected friendly target ;(
+                return unitAsTeamUnit, UnitCanAssist(_player, _target)
+            end
+
+            return unit, true
+        end
+
+        -- UnitExists(_toon_mouse_hover) no need to check this here
+        if UnitIsDeadOrGhost(_toon_mouse_hover) and UnitCanAssist(_player, _toon_mouse_hover) then
+            --00 mouse hovering directly over friendly player-toons in the game-world?
+
+            if not UnitCanAssist(_player, _target) then -- if the current target is not friendly then we dont need to use the target-swap hack and mouseover is faster
+                return _toon_mouse_hover, true
+            end
+
+            local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(_toon_mouse_hover)
+            if unitAsTeamUnit then -- _toon_mouse_hover -> "party1" or "raid1" etc   it is much more efficient this way in a team context compared to having to use target-swap hack
+                return unitAsTeamUnit, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
+            end
+
+            return _toon_mouse_hover, true -- we need to use the target-swap hack here because the currently selected target is friendly   if we dont use the hack then the heal will land on the currently selected friendly target
+        end
+
+        if UnitIsDeadOrGhost(_target) and UnitCanAssist(_player, _target) then -- if we get here we have no mouse-over or mouse-focus so we simply examine if the current target is friendly or not            
+            return _target, false
+        end
+
+        return nil, false -- no valid target found
+
+        -- 00  strangely enough if the mouse hovers over the player toon then UnitCanAssist(_player, _toon_mouse_hover) returns false
+        --     but it doesnt matter really since noone is using this kind of mousehover to heal himself
+    end
+    
+    _G.SLASH_PFQUICKCAST_FRIEND_CORPSE1 = "/pfquickcast@friendcorpse"
+    _G.SLASH_PFQUICKCAST_FRIEND_CORPSE2 = "/pfquickcast:friendcorpse"
+    _G.SLASH_PFQUICKCAST_FRIEND_CORPSE3 = "/pfquickcast.friendcorpse"
+    _G.SLASH_PFQUICKCAST_FRIEND_CORPSE4 = "/pfquickcast_friendcorpse"
+    _G.SLASH_PFQUICKCAST_FRIEND_CORPSE5 = "/pfquickcastfriendcorpse"
+    function SlashCmdList.PFQUICKCAST_FRIEND_CORPSE(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround = _deduceIntendedTarget_forFriendlyCorpseSpells()
+        if proper_target == nil then
+            return nil
+        end
+
+        return _setTargetIfNeededAndCast(
+                _onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround
+        )
+    end
+
+    -- endregion /pfquickcast@friendcorpse
+
     -- region /pfquickcast@enemy
 
     local function _deduceIntendedTarget_forOffensiveSpells()
