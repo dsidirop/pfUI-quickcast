@@ -5,16 +5,31 @@ The '/pfquickcast@*' family of commands are more performant flavours of the orig
 They are designed to be used in macros for casting spells on friendly, enemy or neutral targets in a more efficient and intuitive way
 while taking into account those corner-cases that the original '/pfcast' command has a very hard time dealing with properly.
 
-## 🏗️  Installation
+The addon works for vanilla-warcraft (1.12+) clients and is meant to be used with the [pfUI](https://github.com/shagu/pfUI) addon.
+Should also work with the TBC (2.4.3) client but it hasn't been tested yet.
+
+## 🏗️  Installation (Vanilla)
 
 1. Download the **[latest version](https://github.com/dsidirop/pfUI-quickcast/archive/refs/heads/main.zip)**
 2. Unpack the .zip file
 3. Rename the folder "pfUI-quickcast-main" → "pfUI-quickcast"
-4. Copy "pfUI-quickcast" into
+4. Copy the "pfUI-quickcast" folder into
 
        <Your Warcraft Directory>\Interface\AddOns
 
 5. Restart World of Warcraft
+
+## 🏗️  Installation (The Burning Crusade - Experimental)
+
+1. Download the **[latest version](https://github.com/dsidirop/pfUI-quickcast/archive/refs/heads/main.zip)**
+2. Unpack the .zip file
+3. Rename the folder "pfUI-quickcast-main" → "pfUI-quickcast-tbc"
+4. Copy the "pfUI-quickcast-tbc" folder into
+
+       <Your Warcraft Directory>\Interface\AddOns
+
+5. Restart World of Warcraft
+
 
 ## 🚑  Heal-Auto-Ranking Addons Supporting '/pfquickcast@heal*' Commands
 
