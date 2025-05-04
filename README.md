@@ -26,7 +26,31 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
 
   Note: The original one can be found here [SmartHealer (original)](https://github.com/melbaa/SmartHealer) and doesn't support '/pfquickcast@heal*' commands.
 
-## 📜 Basic Usage:
+## 📋 Quick-Reference Cheat-Sheet
+
+The following flavors are interceptable by the [SmartHealer (extended)](https://github.com/dsidirop/SmartHealer) addon (and any other healing auto-ranking addon that has proper support for these commands):
+
+| Command                                | LUA                                                    | Description                                                                                                     |
+|----------------------------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `/pfquickcast@heal Holy Light`         | `SlashCmdList.PFQUICKCAST_HEAL("Holy Light")`          | Casts given healing spell(s) on friendly mouseover or target; avoids self-cast.                                 |
+| `/pfquickcast@healself Holy Shock`     | `SlashCmdList.PFQUICKCAST_HEAL_SELF("Holy Shock")`     | Casts given healing spell(s) on your character.                                                                 |
+| `/pfquickcast@healtote Flash of Light` | `SlashCmdList.PFQUICKCAST_HEAL_TOTE("Flash of Light")` | Casts given healing spell(s) on friendly target-of-the-enemy; changes current target to the mouse-overed enemy. |
+
+The following flavors are (intentionally) **ignored** by the [SmartHealer (extended)](https://github.com/dsidirop/SmartHealer) addon and will thus cast the given spell as-is:
+
+| Command                                       | LUA                                                           | Description                                                                            |
+|-----------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `/pfquickcast@any Holy Shock`                 | `SlashCmdList.PFQUICKCAST_ANY("Holy Shock")`                  | Casts given spell(s) on any mouse-overed target (friendly, neutral, or enemy.)         |
+| `/pfquickcast@self Hand of Freedom`           | `SlashCmdList.PFQUICKCAST_SELF("Hand of Freedom")`            | Casts given spell(s) on your character.                                                |
+| `/pfquickcast@enemy Frostbolt`                | `SlashCmdList.PFQUICKCAST_ENEMY("Frostbolt")`                 | Casts given spell(s) on enemy/neutral unit.                                            |
+| `/pfquickcast@friend Holy Shock`              | `SlashCmdList.PFQUICKCAST_FRIEND("Holy Shock")`               | Casts given spell(s) on friendly mouseover.                                            |
+| `/pfquickcast@enemytbf Frostbolt`             | `SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")`             | Casts given spell(s) on enemy targeted-by-friendly; changes target to said enemy unit. |
+| `/pfquickcast@intervene Hand of Protection`   | `SlashCmdList.PFQUICKCAST_INTERVENE("Hand of Protection")`    | Casts given spell(s) on friendly player targeted by enemy.                             |
+| `/pfquickcast@friendtote Holy Light (Rank 6)` | `SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Holy Light (Rank 6)")` | Casts given spell(s) on friendly target of enemy.                                      |
+| `/pfquickcast@directenemy Frostbolt`          | `SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("Frostbolt")`          | Casts given spell(s) on current enemy unit (intentionally omits mouse-over.)           |
+
+
+## 📜 Analysis:
 
 - `/pfquickcast@heal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL("<healing_spell_name>")` )
 
