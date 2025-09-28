@@ -304,7 +304,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
             if canBeUsed then
                 if not targetWasToggled and not isSpellCastOnSelfOnly then
-                    -- unfortunately holy shock is buggy when an enemy is targeted   it will cast on the enemy instead of the friendly target
+                    -- unfortunately holy shock is buggy when an enemy is targeted   it will cast on the enemy instead of the friendly target being hovered by the mouse
                     if use_target_toggle_workaround or (
                             intention_is_to_assist_friendly_target and spellRawName == "Holy Shock" and not UnitIsFriend(_player, _target)
                     ) then
@@ -952,6 +952,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region /pfquickcast@directenemy
 
+    -- there is a known limitation when someone is dueling a person in the same party/raid
+    -- which causes the UnitIsFriend(_player) to return true for the duel opponent :(
     local function _deduceIntendedTarget_forDirectEnemy()
         if not UnitExists(_target)
                 and UnitExists(_toon_mouse_hover)

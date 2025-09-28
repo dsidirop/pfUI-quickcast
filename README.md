@@ -231,6 +231,9 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
 
 - `/pfquickcast@directenemy <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("<spell_name>")` )
 
+       Warning: There is a known limitation when someone is dueling a person in the same party/raid which
+       causes the UnitIsFriend(_player) to return true for the duel opponent :(
+
   <br/>Casts spells on your direct **enemy / neutral** target. If you have no enemy currently selected the command will select the enemy under your mouse cursor if any. 
 
   <br/>- You can in fact specify multiple spells in a single macro. If the first spell is not castable (p.e. out of range, on CD, etc.) the next one will be attempted to be cast and so on.
