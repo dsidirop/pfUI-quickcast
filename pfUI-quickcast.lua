@@ -16,12 +16,13 @@ end
 pfUIQuickCast = _pfUIQuickCast:New() -- globally exported singleton symbol for third party addons to be able to hook into the quickcast functionality
 
 pfUI:RegisterModule("QuickCast", "vanilla", function()
+    
     -- region helpers
-
     local pairs_ = _G.pairs
     local assert_ = _G.assert
     local unpack_ = _G.unpack
     local strsub_ = _G.string.sub
+    local strlen_ = _G.string.len
     local strfind_ = _G.string.find
     local rawequal_ = _G.rawequal
     local strgfind_ = _G.string.gfind
@@ -40,8 +41,49 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _toon_mouse_hover = "mouseover"
     local _target_of_target = "targettarget"
 
-    local _pfui_ui_toon_mouse_hover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
+    local _isPlayerInDuel = false
+    local _duelListenerEventsFrame = CreateFrame("Frame", "pfui.quickcast.events.listener.frame") -- Create a frame to handle events
 
+    _duelListenerEventsFrame:RegisterEvent("DUEL_FINISHED")
+    _duelListenerEventsFrame:RegisterEvent("CHAT_MSG_SYSTEM")
+    -- _duelListenerEventsFrame:RegisterEvent("DUEL_COUNTDOWN") -- not supported by 1.12 clients
+    -- _duelListenerEventsFrame:RegisterEvent("DUEL_REQUESTED") -- doesnt really offer any help
+
+    local _duelFinalCountDownRegex = {
+        ["enUS"] = "^Duel starting: 1$", --      us english
+        ["enGB"] = "^Duel starting: 1$", --      british english
+        ["deDE"] = "^Duell beginnt: 1$", --      german
+        ["frFR"] = "^.*duel.*: 1$", --           french   todo figure out the exact phrasing used in this language
+        ["esES"] = "^.*duelo.*: 1$", --          spanish  todo figure out the exact phrasing used in this language
+        ["ruRU"] = "^.*Дуэль.*: 1$", --          russian  todo figure out the exact phrasing used in this language
+        ["ptBR"] = "^.*Duelo.*: 1$", --          brazilian-portuguese   todo figure out the exact phrasing used in this language
+        ["itIT"] = "^.*Duello.*: 1$", --         italian
+        ["koKR"] = "^.*결투.*: 1$", --           korean
+        ["zhCN"] = "^.*决斗.*: 1$", --           chinese simplified
+        ["zhTW"] = "^.*決斗.*: 1$", --           chinese traditional
+    }
+
+    _duelFinalCountDownRegex = string.lower(_duelFinalCountDownRegex[GetLocale()] or _duelFinalCountDownRegex["enUS"])
+
+    _duelListenerEventsFrame:SetScript("OnEvent", function() -- dont specify arguments as it will break the 'event' var   it is meant to be accessed as a global!
+        -- print("** self=" .. tostring(this == _duelListenerEventsFrame))
+        -- print("** event=" .. tostring(event))
+        -- print("** arg1=" .. tostring(arg1))
+
+        if event == "CHAT_MSG_SYSTEM" and strlen_(arg1 or "") < 30 and strfind_(string.lower(arg1 or ""), _duelFinalCountDownRegex) then
+            _isPlayerInDuel = true
+            
+            -- print("** [pfUI-quickcast] detected DUEL_STARTING event")
+
+        elseif event == "DUEL_FINISHED" then
+            _isPlayerDueling = false
+
+            -- print("** [pfUI-quickcast] detected DUEL_FINISHED event")
+        end
+    end)
+    
+    local _pfui_ui_toon_mouse_hover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
+    
     local _solo_spell_target_units = (function()
         local standardSpellTargets = { }
 
@@ -951,9 +993,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- endregion /pfquickcast@enemytbf
 
     -- region /pfquickcast@directenemy
-
-    -- there is a known limitation when someone is dueling a person in the same party/raid
-    -- which causes the UnitIsFriend(_player) to return true for the duel opponent :(
+ 
     local function _deduceIntendedTarget_forDirectEnemy()
         if not UnitExists(_target)
                 and UnitExists(_toon_mouse_hover)
@@ -962,12 +1002,17 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             TargetUnit(_toon_mouse_hover)
             return _target, false
         end
-
-        if not UnitIsFriend(_player, _target) and not UnitIsDeadOrGhost(_target) then
+        
+        if (_isPlayerInDuel or not UnitIsFriend(_player, _target)) and not UnitIsDeadOrGhost(_target) then --00
             return _target, false
         end
 
         return nil, false -- no valid target found
+
+        --00  there is a known limitation when someone is dueling a person in the same party/raid
+        --    which causes the UnitIsFriend(_player) to return true for the duel opponent :(
+        --
+        --    this is why we take into account the _isPlayerInDuel flag here
     end
 
     _G.SLASH_PFQUICKCAST_DIRECT_ENEMY1 = "/pfquickcast@directenemy"
