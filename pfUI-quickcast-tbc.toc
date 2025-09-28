@@ -1,10 +1,10 @@
-## Interface: 11200
+## Interface: 20400
 ## Title: |cff33ffccpf|cffffffffUI|cffaaaaaa |cffffcc00[QuickCast]|r
 ## Version: 0.0.1
 ## Notes: Gives you the '/pfquickcast@*' family of commands which are more performant and tailored versions of the typical '/pfcast' command. It's been masoned with mouseover-macros in mind and snapp(ier) casting of spells, particularly healing spells on pfUI's own Unit Frames.
 ## Author: dsidirop
 ## LoadOnDemand: 0
-## Dependencies: pfUI
+## Dependencies: pfUI-tbc
 ## OptionalDeps:
 ## SavedVariables:
 ## SavedVariablesPerCharacter:

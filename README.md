@@ -5,16 +5,31 @@ The '/pfquickcast@*' family of commands are more performant flavours of the orig
 They are designed to be used in macros for casting spells on friendly, enemy or neutral targets in a more efficient and intuitive way
 while taking into account those corner-cases that the original '/pfcast' command has a very hard time dealing with properly.
 
-## 🏗️  Installation
+The addon works for vanilla-warcraft (1.12+) clients and is meant to be used with the [pfUI](https://github.com/shagu/pfUI) addon.
+Should also work with the TBC (2.4.3) client but it hasn't been tested yet.
+
+## 🏗️  Installation (Vanilla)
 
 1. Download the **[latest version](https://github.com/dsidirop/pfUI-quickcast/archive/refs/heads/main.zip)**
 2. Unpack the .zip file
 3. Rename the folder "pfUI-quickcast-main" → "pfUI-quickcast"
-4. Copy "pfUI-quickcast" into
+4. Copy the "pfUI-quickcast" folder into
 
        <Your Warcraft Directory>\Interface\AddOns
 
 5. Restart World of Warcraft
+
+## 🏗️  Installation (The Burning Crusade - Experimental)
+
+1. Download the **[latest version](https://github.com/dsidirop/pfUI-quickcast/archive/refs/heads/main.zip)**
+2. Unpack the .zip file
+3. Rename the folder "pfUI-quickcast-main" → "pfUI-quickcast-tbc"
+4. Copy the "pfUI-quickcast-tbc" folder into
+
+       <Your Warcraft Directory>\Interface\AddOns
+
+5. Restart World of Warcraft
+
 
 ## 🚑  Heal-Auto-Ranking Addons Supporting '/pfquickcast@heal*' Commands
 
@@ -26,7 +41,32 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
 
   Note: The original one can be found here [SmartHealer (original)](https://github.com/melbaa/SmartHealer) and doesn't support '/pfquickcast@heal*' commands.
 
-## 📜 Basic Usage:
+## 📋 Quick-Reference Cheat-Sheet
+
+The following flavors are interceptable by the [SmartHealer (extended)](https://github.com/dsidirop/SmartHealer) addon (and any other healing auto-ranking addon that has proper support for these commands):
+
+| Command                                | LUA                                                    | Description                                                                                                     |
+|----------------------------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `/pfquickcast@heal Holy Light`         | `SlashCmdList.PFQUICKCAST_HEAL("Holy Light")`          | Casts given healing spell(s) on friendly mouseover or target; avoids self-cast.                                 |
+| `/pfquickcast@healself Holy Shock`     | `SlashCmdList.PFQUICKCAST_HEAL_SELF("Holy Shock")`     | Casts given healing spell(s) on your character.                                                                 |
+| `/pfquickcast@healtote Flash of Light` | `SlashCmdList.PFQUICKCAST_HEAL_TOTE("Flash of Light")` | Casts given healing spell(s) on friendly target-of-the-enemy; changes current target to the mouse-overed enemy. |
+
+The following flavors are (intentionally) **ignored** by the [SmartHealer (extended)](https://github.com/dsidirop/SmartHealer) addon and will thus cast the given spell as-is:
+
+| Command                                       | LUA                                                           | Description                                                                            |
+|-----------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `/pfquickcast@any Holy Shock`                 | `SlashCmdList.PFQUICKCAST_ANY("Holy Shock")`                  | Casts given spell(s) on any mouse-overed target (friendly, neutral, or enemy.)         |
+| `/pfquickcast@self Hand of Freedom`           | `SlashCmdList.PFQUICKCAST_SELF("Hand of Freedom")`            | Casts given spell(s) on your character.                                                |
+| `/pfquickcast@enemy Frostbolt`                | `SlashCmdList.PFQUICKCAST_ENEMY("Frostbolt")`                 | Casts given spell(s) on enemy/neutral unit.                                            |
+| `/pfquickcast@friend Holy Shock`              | `SlashCmdList.PFQUICKCAST_FRIEND("Holy Shock")`               | Casts given spell(s) on friendly mouseover.                                            |
+| `/pfquickcast@enemytbf Frostbolt`             | `SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")`             | Casts given spell(s) on enemy targeted-by-friendly; changes target to said enemy unit. |
+| `/pfquickcast@intervene Hand of Protection`   | `SlashCmdList.PFQUICKCAST_INTERVENE("Hand of Protection")`    | Casts given spell(s) on friendly player targeted by enemy.                             |
+| `/pfquickcast@friendtote Holy Light (Rank 6)` | `SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Holy Light (Rank 6)")` | Casts given spell(s) on friendly target of enemy.                                      |
+| `/pfquickcast@directenemy Frostbolt`          | `SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("Frostbolt")`          | Casts given spell(s) on current enemy unit (intentionally ignoring mouse-over.)        |
+| `/pfquickcast@friendcorpse Redemption`        | `SlashCmdList.PFQUICKCAST_FRIEND_CORPSE("Redemption")`        | Casts given spell(s) on current friendly dead unit.                                    |
+
+
+## 📜 Analysis:
 
 - `/pfquickcast@heal <healing_spell_name>` ( `/script SlashCmdList.PFQUICKCAST_HEAL("<healing_spell_name>")` )
 
@@ -232,6 +272,10 @@ List of heal-auto-ranking addons that support the '/pfquickcast@heal*' commands:
 - `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 
   <br/>Casts spells to any target (friendly, neutral or enemy) p.e. on pfUI frames via mouse-hover.<br/>
+
+- `/pfquickcast@friendcorpse <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_FRIEND_CORPSE("<spell_name>")` )
+
+  <br/>Casts a spell to friendly unit's corpse p.e. on pfUI frames via mouse-hover.<br/>
 
 ## ❓ Why pfUI-QuickCast?
 
