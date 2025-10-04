@@ -145,6 +145,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     local function _tryGetUnitOfFrameHovering()
         local mouseFrame = GetMouseFocus()
+
         return mouseFrame and mouseFrame.label and mouseFrame.id
                 and (mouseFrame.label .. mouseFrame.id)
                 or nil
@@ -473,6 +474,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local function _deduceIntendedTarget_forFriendlySpells()
 
         local unitOfFrameHovering = _tryGetUnitOfFrameHovering()
+
         if unitOfFrameHovering and UnitCanAssist(_player, unitOfFrameHovering) then
             local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- we need to check
             if unitAsTeamUnit then
