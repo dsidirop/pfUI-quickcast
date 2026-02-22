@@ -283,7 +283,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local _non_self_castable_spells = { -- some spells report 0 min/max range but are not self-castable
-        ["Maul"] = true,
+        ["Maul"] = true, -- todo   get these names localized!
         ["Slam"] = true,
         ["Holy Strike"] = true,
         ["Raptor Strike"] = true,
@@ -349,7 +349,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 if not targetWasToggled and not isSpellCastOnSelfOnly then
                     -- unfortunately holy shock is buggy when an enemy is targeted   it will cast on the enemy instead of the friendly target being hovered by the mouse
                     if use_target_toggle_workaround or (
-                            intention_is_to_assist_friendly_target and spellRawName == "Holy Shock" and not UnitIsFriend(_player, _target)
+                            intention_is_to_assist_friendly_target
+                                    and (spellRawName == "Holy Shock" or spellRawName == "Chastise")
+                                    and not UnitIsFriend(_player, _target)
                     ) then
                         targetWasToggled = true
                         TargetUnit(proper_target)
