@@ -76,7 +76,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             -- print("** [pfUI-quickcast] detected DUEL_STARTING event")
 
         elseif event == "DUEL_FINISHED" then
-            _isPlayerDueling = false
+            _isPlayerInDuel = false
 
             -- print("** [pfUI-quickcast] detected DUEL_FINISHED event")
         end
