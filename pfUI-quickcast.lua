@@ -73,9 +73,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     _duelListenerEventsFrame:SetScript("OnEvent", function() -- dont specify arguments as it will break the 'event' var   it is meant to be accessed as a global!
         if event == "PLAYER_ENTERING_WORLD" then
             _isPlayerInDuel = false
-            
-            PLAYER_OWN_GUID = UnitGuid and UnitGuid("player") -- nampower v2.x used this
-                    or GetUnitGuid and GetUnitGuid("player") -- nampower v3.x switched over to this
+
+            PLAYER_OWN_GUID = GetUnitGuid and GetUnitGuid("player") --    nampower v3.x switched over to this
+                    or UnitGuid and UnitGuid("player") --                 nampower v2.x used this
                     or nil
             
             IS_GUID_CASTING_SUPPORTED = type(PLAYER_OWN_GUID) == "string" and strlen_(PLAYER_OWN_GUID) > 0
