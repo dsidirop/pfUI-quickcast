@@ -1,6 +1,6 @@
 ## Interface: 11200
 ## Title: |cff33ffccpf|cffffffffUI|cffaaaaaa |cffffcc00[QuickCast]|r
-## Version: 0.0.1
+## Version: 0.9
 ## Notes: Gives you the '/pfquickcast@*' family of commands which are more performant and tailored versions of the typical '/pfcast' command. It's been masoned with mouseover-macros in mind and snapp(ier) casting of spells, particularly healing spells on pfUI's own Unit Frames.
 ## Author: dsidirop
 ## LoadOnDemand: 0
@@ -8,7 +8,7 @@
 ## OptionalDeps:
 ## SavedVariables:
 ## SavedVariablesPerCharacter:
-## X-Date: Apr 21, 2024
+## X-Date: Mar 01, 2026
 ## X-License: GPL v3
 ## X-Website: github.com/dsidirop/pfUI-quickcast
 ## X-Category: Macros Enhancements

@@ -258,9 +258,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return
         end
 
-        castSpell_ = _G.CastSpell --                           we need to allow addons like SmartHealer to hook up
-        castSpellByName_ = _G.CastSpellByName --               their interceptors on these global functions first
-        castSpellByNameNoQueue_ = _G.CastSpellByNameNoQueue -- and then snapshot them hence the lazy binding here
+        castSpell_ = _G.CastSpell --                                                 we need to allow addons like SmartHealer to hook up
+        castSpellByName_ = _G.CastSpellByName --                                     their interceptors on these global functions first
+        castSpellByNameNoQueue_ = _G.CastSpellByNameNoQueue or _G.CastSpellByName -- and then snapshot them hence the lazy binding here
 
         targetUnit_ = _G.TargetUnit
         spellTargetUnit_ = _G.SpellTargetUnit
