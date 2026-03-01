@@ -34,6 +34,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local tableinsert_ = _G.table.insert
     local tableremove_ = _G.table.remove
 
+    local unitIsUnit_ = _G.UnitIsUnit
+    
+    local unitInRaid_ = _G.UnitInRaid
+    local getNumPartyMembers_ = _G.GetNumPartyMembers
+
     local getLocale_ = _G.GetLocale
     local getMouseFocus_ = _G.GetMouseFocus
 
@@ -130,7 +135,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         tableinsert_(standardSpellTargets, "pet") --    vital to add this one for when the player himself has a pet
-        tableinsert_(standardSpellTargets, "player") -- vital to add this one as well because as it turns out party1->4 doesnt match properly with UnitIsUnit()
+        tableinsert_(standardSpellTargets, "player") -- vital to add this one as well because as it turns out party1->4 doesnt match properly with unitIsUnit_()
         
         -- tableinsert_(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
@@ -199,8 +204,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         -- searching for pets and raid members that are being targeted via _target_of_target or _toon_mouse_hover
-        local properSpellTargetUnits = (UnitInRaid(_player) and _raid_spell_target_units)
-                or (GetNumPartyMembers() and _party_spell_target_units)
+        local properSpellTargetUnits = (unitInRaid_(_player) and _raid_spell_target_units)
+                or (getNumPartyMembers_() and _party_spell_target_units)
                 or _solo_spell_target_units
 
         for _, spellTargetUnitName in pairs_(properSpellTargetUnits) do
@@ -211,7 +216,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         for _, spellTargetUnitName in pairs_(properSpellTargetUnits) do
-            if UnitIsUnit(unit, spellTargetUnitName) then
+            if unitIsUnit_(unit, spellTargetUnitName) then
                 return spellTargetUnitName
             end
         end
@@ -395,7 +400,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 and not rawequal_(proper_target, _target)
                 and not rawequal_(proper_target, _player)
                 and (not IS_GUID_CASTING_SUPPORTED or not _isGuid(proper_target))
-                and not UnitIsUnit(proper_target, _target)
+                and not unitIsUnit_(proper_target, _target)
 
         local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget, spellRawName
         local targetWasToggled, wasSpellCastSuccessful, spellThatQualified = false, false, nil
@@ -482,7 +487,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 and UnitCanAssist(_player, unit)
                 and _tryTranslateUnitToStandardSpellTargetUnit(unit)
 
-        if unitstr or UnitIsUnit(_target, unit) then
+        if unitstr or unitIsUnit_(_target, unit) then
             -- no target change required   we can either use spell target or the unit that is already our current target
             _pfui_ui_toon_mouse_hover.unit = (unitstr or _target)
             return _pfui_ui_toon_mouse_hover.unit, false
@@ -766,7 +771,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         if UnitExists(_toon_mouse_hover) -- for offensive spells it is more common to use world-mouseover rather than unit-frames mouse-hovering
                 and not UnitIsFriend(_player, _toon_mouse_hover)
-                and not UnitIsUnit(_toon_mouse_hover, _target)
+                and not unitIsUnit_(_toon_mouse_hover, _target)
                 and not UnitIsDeadOrGhost(_toon_mouse_hover) then
             --00 mouse hovering directly over an enemy toon in the game-world?
 
@@ -788,7 +793,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         if unitOfFrameHovering
                 and UnitExists(unitOfFrameHovering)
                 and not UnitIsFriend(_player, unitOfFrameHovering)
-                and not UnitIsUnit(_target, unitOfFrameHovering)
+                and not unitIsUnit_(_target, unitOfFrameHovering)
                 and not UnitIsDeadOrGhost(unitOfFrameHovering) then
             -- local unitAsTeamUnit = tryTranslateUnitToStandardSpellTargetUnit(unitOfFrameHovering) -- no point to do that here    it only makes sense for friendly units not enemy ones
 
@@ -843,7 +848,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local gotEnemyCandidateFromMouseFrameHovering = false
 
         local unitOfFrameHovering = _tryGetUnitOfFrameHovering()
-        if unitOfFrameHovering and not UnitIsUnit(unitOfFrameHovering, _target) then
+        if unitOfFrameHovering and not unitIsUnit_(unitOfFrameHovering, _target) then
             if not UnitExists(unitOfFrameHovering) --                  unit-frames mouse-hovering   
                     or UnitIsFriend(_player, unitOfFrameHovering) --   we check that the mouse-hover unit-frame is alive and enemy
                     or UnitIsDeadOrGhost(unitOfFrameHovering) then
@@ -854,7 +859,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             gotEnemyCandidateFromMouseFrameHovering = true
             TargetUnit(unitOfFrameHovering)
 
-        elseif UnitExists(_toon_mouse_hover) and not UnitIsUnit(_toon_mouse_hover, _target) then
+        elseif UnitExists(_toon_mouse_hover) and not unitIsUnit_(_toon_mouse_hover, _target) then
             if UnitIsFriend(_player, _toon_mouse_hover) --   is the mouse hovering directly over a enemy toon in the game world?
                     or UnitIsDead(_toon_mouse_hover) then
                 -- we check if its enemy and alive   if its not we guard close
@@ -949,7 +954,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         if not UnitIsFriend(_player, _target)
                 and UnitCanAssist(_player, _target_of_target)
-                and not UnitIsUnit(_player, _target_of_target)
+                and not unitIsUnit_(_player, _target_of_target)
                 and not UnitIsDead(_target_of_target) then
 
             local unitAsTeamUnit = _tryTranslateUnitToStandardSpellTargetUnit(_target_of_target) -- raid context
@@ -999,7 +1004,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local gotFriendCandidateFromMouseHover = false
 
         local unitOfFrameHovering = _tryGetUnitOfFrameHovering()
-        if unitOfFrameHovering and not UnitIsUnit(unitOfFrameHovering, _target) then
+        if unitOfFrameHovering and not unitIsUnit_(unitOfFrameHovering, _target) then
 
             if not UnitIsFriend(_player, unitOfFrameHovering) or UnitIsDeadOrGhost(unitOfFrameHovering) then
                 return nil, false
@@ -1008,7 +1013,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             gotFriendCandidateFromMouseHover = true
             TargetUnit(unitOfFrameHovering)
 
-        elseif UnitExists(_toon_mouse_hover) and not UnitIsUnit(_toon_mouse_hover, _target) then
+        elseif UnitExists(_toon_mouse_hover) and not unitIsUnit_(_toon_mouse_hover, _target) then
 
             if not UnitIsFriend(_player, _toon_mouse_hover) or UnitIsDeadOrGhost(_toon_mouse_hover) then
                 return nil, false
