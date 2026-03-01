@@ -15,11 +15,19 @@ end
 
 pfUIQuickCast = _pfUIQuickCast:New() -- globally exported singleton symbol for third party addons to be able to hook into the quickcast functionality
 
+-- absolutely crucial to snapshot this before SmartHealer or any other auto-ranking addon hooks into it   we definately
+-- dont want the heal-autoranking-mechanism to be invoked twice in a row for this addon and once more for SlashCmdList.PFCASTFOCUS()!!
+local g_hooklessPfuiCastFocus_ = SlashCmdList.PFCASTFOCUS
+
 pfUI:RegisterModule("QuickCast", "vanilla", function()
 
+    local _G = _G -- snapshot it locally to speed things up a bit
+    
     local MAX_RAID_MEMBERS_ = _G.MAX_RAID_MEMBERS or 40 --         this constant does include the player himself in the raid-count
     local MAX_OTHER_PARTY_MEMBERS_ = _G.MAX_PARTY_MEMBERS or 4 --  even though the party contains 5 members the player himself is not counted in the MAX_PARTY_MEMBERS so the game sets it 4
 
+    local hooklessPfuiCastFocus_ = g_hooklessPfuiCastFocus_ or SlashCmdList.PFCASTFOCUS -- just in case
+    
     -- region helpers
     local type_ = _G.type
     local pairs_ = _G.pairs
@@ -49,6 +57,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local getSpellCooldown_ = _G.GetSpellCooldown
 
     local pfGetSpellInfo_ = _G.pfUI.api.libspell.GetSpellInfo
+    local lazyPfqcOnHealSnapshot_ -- dont set this to pfUIQuickCast.OnHeal right away    we need to allow addons like SmartHealer to install their hooks first before we snapshot it!!!
     
     local _pet = "pet"
     local _player = "player"
@@ -231,7 +240,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _cvarAutoSelfCastCached -- getCVar_("AutoSelfCast")  dont
     local function _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
         if intention_is_focus_cast or (pfUI.uf and pfUI.uf.focus and pfUI.uf.focus.label) == proper_target then -- special case
-            SlashCmdList.PFCASTFOCUS(spellName) -- this tends to use CastSpellByNameNoQueue in some pfui-forks which is more optimal for emergency casting like insta-heals and interrupts!
+            hooklessPfuiCastFocus_(spellName) -- this tends to use CastSpellByNameNoQueue in some pfui-forks which is more optimal for emergency casting like insta-heals and interrupts!
             return
         end
         
@@ -602,8 +611,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
+        if not lazyPfqcOnHealSnapshot_ then lazyPfqcOnHealSnapshot_ = pfUIQuickCast.OnHeal end -- crucial to be snapshotted lazily!  its typically hooked upon and intercepted by external addons to autorank healing spells etc
+
         return _setTargetIfNeededAndCast(
-                pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                lazyPfqcOnHealSnapshot_,
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
@@ -624,8 +635,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
+        if not lazyPfqcOnHealSnapshot_ then lazyPfqcOnHealSnapshot_ = pfUIQuickCast.OnHeal end -- crucial to be snapshotted lazily!  its typically hooked upon and intercepted by external addons to autorank healing spells etc
+
         return _setTargetIfNeededAndCast(
-                pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                lazyPfqcOnHealSnapshot_,
                 spellsString,
                 _player,
                 false,
@@ -905,8 +918,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
+        if not lazyPfqcOnHealSnapshot_ then lazyPfqcOnHealSnapshot_ = pfUIQuickCast.OnHeal end -- crucial to be snapshotted lazily!  its typically hooked upon and intercepted by external addons to autorank healing spells etc
+
         return _setTargetIfNeededAndCast(
-                pfUIQuickCast.OnHeal, -- this can be hooked upon and intercepted by external addons to autorank healing spells etc
+                lazyPfqcOnHealSnapshot_,
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
@@ -1181,8 +1196,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return nil
         end
 
+        if not lazyPfqcOnHealSnapshot_ then lazyPfqcOnHealSnapshot_ = pfUIQuickCast.OnHeal end -- crucial to be snapshotted lazily!  its typically hooked upon and intercepted by external addons to autorank healing spells etc
+
         return _setTargetIfNeededAndCast(
-                pfUIQuickCast.OnHeal,
+                lazyPfqcOnHealSnapshot_,
                 spellsString,
                 proper_target,
                 true, -- use_target_toggle_workaround   needed for legacy contexts where guid-casting is not supported!
