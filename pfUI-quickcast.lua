@@ -42,13 +42,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _target_of_target = "targettarget"
 
     local _isPlayerInDuel = false
-    local _duelListenerEventsFrame = CreateFrame("Frame", "pfui.quickcast.events.listener.frame") -- Create a frame to handle events
+    local _gameEventsListenerFrame = CreateFrame("Frame", "pfui.quickcast.events.listener.frame") -- Create a frame to handle events
 
-    _duelListenerEventsFrame:RegisterEvent("DUEL_FINISHED")
-    _duelListenerEventsFrame:RegisterEvent("CHAT_MSG_SYSTEM")
-    _duelListenerEventsFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    -- _duelListenerEventsFrame:RegisterEvent("DUEL_COUNTDOWN") -- not supported by 1.12 clients
-    -- _duelListenerEventsFrame:RegisterEvent("DUEL_REQUESTED") -- doesnt really offer any help
+    _gameEventsListenerFrame:RegisterEvent("DUEL_FINISHED")
+    _gameEventsListenerFrame:RegisterEvent("CHAT_MSG_SYSTEM")
+    _gameEventsListenerFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    -- _gameEventsListenerFrame:RegisterEvent("DUEL_COUNTDOWN") -- not supported by 1.12 clients
+    -- _gameEventsListenerFrame:RegisterEvent("DUEL_REQUESTED") -- doesnt really offer any help
 
     local _duelFinalCountDownRegex = {
         ["enUS"] = "^Duel starting: 1$", --      us english
@@ -64,18 +64,17 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         ["zhTW"] = "^.*決斗.*: 1$", --            chinese traditional
     }
 
-
     _duelFinalCountDownRegex = string.lower(_duelFinalCountDownRegex[GetLocale()] or _duelFinalCountDownRegex["enUS"])
 
     local PLAYER_OWN_GUID = "0x"
     local IS_GUID_CASTING_SUPPORTED = false
     local TARGET_GUIDS_STANDARD_LENGTH = -1
-    _duelListenerEventsFrame:SetScript("OnEvent", function() -- dont specify arguments as it will break the 'event' var   it is meant to be accessed as a global!
+    _gameEventsListenerFrame:SetScript("OnEvent", function() -- dont specify arguments as it will break the 'event' var   it is meant to be accessed as a global!
         if event == "PLAYER_ENTERING_WORLD" then
             _isPlayerInDuel = false
-            
-            PLAYER_OWN_GUID = UnitGuid and UnitGuid("player") -- nampower v2.x used this
-                    or GetUnitGuid and GetUnitGuid("player") -- nampower v3.x switched over to this
+
+            PLAYER_OWN_GUID = GetUnitGuid and GetUnitGuid("player") --    nampower v3.x switched over to this
+                    or UnitGuid and UnitGuid("player") --                 nampower v2.x used this
                     or nil
             
             IS_GUID_CASTING_SUPPORTED = type(PLAYER_OWN_GUID) == "string" and strlen_(PLAYER_OWN_GUID) > 0
@@ -211,22 +210,18 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local _cvarAutoSelfCastCached -- getCVar_("AutoSelfCast")  dont
-    local function _onCast(spellName, spellId, spellBookType, proper_target)
-        if pfUI.uf
-                and pfUI.uf.focus
-                and pfUI.uf.focus.label ~= ""
-                and pfUI.uf.focus.label ~= nil
-                and rawequal_(proper_target, pfUI.uf.focus.label) then 
-            SlashCmdList.PFCASTFOCUS(spellName)
+    local function _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
+        if intention_is_focus_cast or (pfUI.uf and pfUI.uf.focus and pfUI.uf.focus.label) == proper_target then -- special case
+            SlashCmdList.PFCASTFOCUS(spellName) -- this tends to use CastSpellByNameNoQueue in some pfui-forks which is more optimal for emergency casting like insta-heals and interrupts!
             return
         end
-
-        if rawequal_(proper_target, _player) or (PLAYER_OWN_GUID and proper_target == PLAYER_OWN_GUID) then
+        
+        if rawequal_(proper_target, _player) or (IS_GUID_CASTING_SUPPORTED and proper_target == PLAYER_OWN_GUID) then
             CastSpellByName(spellName, 1) -- faster
             return
         end
 
-        if strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then
+        if IS_GUID_CASTING_SUPPORTED and strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then
             CastSpellByName(spellName, proper_target) -- nampower and super_wow guid-based casts
             return
         end
@@ -371,8 +366,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             spellsString,
             proper_target,
             use_target_toggle_workaround,
-            intention_is_to_assist_only_friendly_targets
-    )
+            intention_is_to_assist_only_friendly_targets,
+            intention_is_focus_cast
+    )        
         local spellsArray = _parseSpellsString(spellsString)
         if not spellsArray then
             return nil
@@ -411,7 +407,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
                 _pfui_ui_toon_mouse_hover.unit = eventualTarget
 
-                spellCastCallback(spell, spellId, spellBookType, eventualTarget) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+                spellCastCallback(spell, spellId, spellBookType, eventualTarget, intention_is_focus_cast) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
                 if eventualTarget == _player then
                     -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages   we live with this for now
@@ -506,7 +502,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast,
                 spell,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                false --  intention_is_focus_cast
         )
     end
 
@@ -514,10 +511,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region   /pfquickcast:heal  and  :healself
 
-    function pfUIQuickCast.OnHeal(spellName, spellId, spellBookType, proper_target)
+    function pfUIQuickCast.OnHeal(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
         -- keep the proper_target parameter even if its not needed per se this method   we want
         -- calls to this method to be hooked-upon/intercepted by third party heal-autoranking addons
-        return _onCast(spellName, spellId, spellBookType, proper_target)
+        return _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
     end
 
     local function _deduceIntendedTarget_forFriendlySpells()
@@ -591,7 +588,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
-                true -- setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                true, --  setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                false --  intention_is_focus_cast
         )
     end
 
@@ -612,7 +610,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 spellsString,
                 _player,
                 false,
-                true -- setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                true, --  setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                false --  intention_is_focus_cast
         )
     end
 
@@ -636,7 +635,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onSelfCast,
                 spellsString,
                 _player,
-                false
+                true, --  intention_is_to_assist_only_friendly_targets
+                false --  intention_is_focus_cast
         )
     end
 
@@ -666,7 +666,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
-                true -- setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                true, --  setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                false --  intention_is_focus_cast
         )
     end
 
@@ -738,7 +739,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast,
                 spellsString,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
         )
     end
 
@@ -813,7 +815,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast,
                 spellsString,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
         )
     end
 
@@ -888,7 +891,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
-                true -- setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                true, --  setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                false --  intention_is_focus_cast
         )
     end
 
@@ -918,7 +922,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
-                true -- setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                true, --  setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                false --  intention_is_focus_cast
         )
     end
 
@@ -966,7 +971,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 spellsString,
                 proper_target,
                 use_target_toggle_workaround,
-                true -- setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                true, --  setting intention_is_to_assist_only_friendly_targets=true is vital to set this for certain corner cases
+                false --  intention_is_focus_cast
         )
     end
 
@@ -1037,7 +1043,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast,
                 spellsString,
                 proper_target,
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
         )
     end
 
@@ -1087,7 +1094,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast,
                 spellsString,
                 proper_target, -- essentially always _target
-                use_target_toggle_workaround
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
         )
     end
 
@@ -1126,8 +1134,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 _onCast,
                 spellsString,
                 proper_target,
-                true, -- use_target_toggle_workaround
-                true -- intention_is_to_assist_only_friendly_targets
+                true, -- use_target_toggle_workaround   needed for legacy contexts where guid-casting is not supported!
+                true, -- intention_is_to_assist_only_friendly_targets
+                true --  intention_is_focus_cast   speeds things up inside _onCast()
         )
     end
 
@@ -1157,8 +1166,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 pfUIQuickCast.OnHeal,
                 spellsString,
                 proper_target,
-                true, -- use_target_toggle_workaround
-                true -- intention_is_to_assist_only_friendly_targets
+                true, -- use_target_toggle_workaround   needed for legacy contexts where guid-casting is not supported!
+                true, -- intention_is_to_assist_only_friendly_targets
+                true --  intention_is_focus_cast   speeds things up inside _onCast()
         )
     end
 

@@ -292,10 +292,11 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
 
   'Flash of Light'<br/>
   Down-ranked 'Healing Touch'<br/>
-  'Rejuvenation'<br/>
+  'Rejuvenation'<br/><br/>
 
-  <br/>One could argue that /pfcast could be refactored further so that 'loadstring()' could be wrapped and made smarter with some sort of caching mechanism
-  for the most commonly used LUA scripts passed to it, but that's just feels as flogging an ailing horse.<br/><br/>
+  One could argue that /pfcast could be refactored further so that 'loadstring()' could be wrapped and made smarter with some sort of caching mechanism
+  for the most commonly used LUA scripts passed to it (btw certain forks of pfUI out there have optimized in this exact way), but that's just feels as flogging
+  an ailing horse kicking a bit further down a garbled road.<br/><br/>
 
 - **Intention**: The '/pfquickcast@heal*' commands are interceptable by healing auto-ranking addons for optimum performance.<br/><br/>
 
