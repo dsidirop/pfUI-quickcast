@@ -29,6 +29,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local hooklessPfuiCastFocus_ = g_hooklessPfuiCastFocus_ or SlashCmdList.PFCASTFOCUS -- just in case
     
     -- region helpers
+    local pfui_ = _G.pfUI
     local type_ = _G.type
     local pairs_ = _G.pairs
     local assert_ = _G.assert
@@ -236,25 +237,55 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         return nil
     end
+    
+    local targetUnit_
+    local spellTargetUnit_
+    local spellIsTargeting_
+    local targetLastTarget_
+    local spellStopTargeting_
+    
+    local castSpell_
+    local castSpellByName_
+    local castSpellByNameNoQueue_
+    local areLazySnapshotSpellCastFuncsInPlace_ = false
+    local function _lazySnapshotSpellCastFuncs()
+        if areLazySnapshotSpellCastFuncsInPlace_ then
+            return
+        end
+
+        castSpell_ = _G.CastSpell --                           we need to allow addons like SmartHealer to hook up
+        castSpellByName_ = _G.CastSpellByName --               their interceptors on these global functions first
+        castSpellByNameNoQueue_ = _G.CastSpellByNameNoQueue -- and then snapshot them hence the lazy binding here
+
+        targetUnit_ = _G.TargetUnit
+        spellTargetUnit_ = _G.SpellTargetUnit
+        spellIsTargeting_ = _G.SpellIsTargeting
+        targetLastTarget_ = _G.TargetLastTarget
+        spellStopTargeting_ = _G.SpellStopTargeting
+    end
 
     local function _onSelfCast(spellName, _, _, _)
-        CastSpellByName(spellName, 1)
+        if not areLazySnapshotSpellCastFuncsInPlace_ then _lazySnapshotSpellCastFuncs() end -- lazy-setup once
+        
+        castSpellByName_(spellName, 1)
     end
 
     local _cvarAutoSelfCastCached -- getCVar_("AutoSelfCast")  dont
     local function _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
-        if intention_is_focus_cast or (pfUI.uf and pfUI.uf.focus and pfUI.uf.focus.label) == proper_target then -- special case
+        if not areLazySnapshotSpellCastFuncsInPlace_ then _lazySnapshotSpellCastFuncs() end -- lazy-setup once
+        
+        if intention_is_focus_cast or (pfui_.uf and pfui_.uf.focus and pfui_.uf.focus.label) == proper_target then -- special case
             hooklessPfuiCastFocus_(spellName) -- SlashCmdList.PFCASTFOCUS() essentially   this tends to use CastSpellByNameNoQueue in some pfui-forks which is more optimal for emergency casting like insta-heals and interrupts!
             return
         end
         
         if rawequal_(proper_target, _player) or (IS_GUID_CASTING_SUPPORTED and proper_target == PLAYER_OWN_GUID) then
-            CastSpellByName(spellName, 1) -- faster
+            castSpellByName_(spellName, 1) -- faster
             return
         end
 
         if IS_GUID_CASTING_SUPPORTED and strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then
-            CastSpellByName(spellName, proper_target) -- nampower and super_wow guid-based casts
+            castSpellByName_(spellName, proper_target) -- nampower and super_wow guid-based casts
             return
         end
 
@@ -263,12 +294,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 or _cvarAutoSelfCastCached
 
         if rawequal_(_cvarAutoSelfCastCached, "0") then
-            CastSpell(spellId, spellBookType) -- faster using spellid
+            castSpell_(spellId, spellBookType) -- faster using spellid
             return
         end
 
         setCVar_("AutoSelfCast", "0") -- cast without selfcast cvar setting to allow spells to use spelltarget
-        CastSpell(spellId, spellBookType) -- faster using spellid
+        castSpell_(spellId, spellBookType) -- faster using spellid
         setCVar_("AutoSelfCast", _cvarAutoSelfCastCached)
     end
 
@@ -400,7 +431,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             use_target_toggle_workaround,
             intention_is_to_assist_only_friendly_targets,
             intention_is_focus_cast
-    )        
+    )
+        if not areLazySnapshotSpellCastFuncsInPlace_ then _lazySnapshotSpellCastFuncs() end -- lazy-setup once
+        
         local spellsArray = _parseSpellsString(spellsString)
         if not spellsArray then
             return nil
@@ -429,7 +462,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                                     and not UnitIsFriend(_player, _target)
                     ) then
                         targetWasToggled = true
-                        TargetUnit(proper_target)
+                        targetUnit_(proper_target)
                     end
                 end
 
@@ -448,12 +481,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                     break
                 end
 
-                if SpellIsTargeting() then
+                if spellIsTargeting_() then
                     -- if the spell is awaiting a target to be specified ...
-                    SpellTargetUnit(eventualTarget)
+                    spellTargetUnit_(eventualTarget)
                 end
 
-                wasSpellCastSuccessful = not SpellIsTargeting()
+                wasSpellCastSuccessful = not spellIsTargeting_()
                 if wasSpellCastSuccessful then
                     spellThatQualified = spell
                     break
@@ -462,14 +495,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         if targetWasToggled then
-            TargetLastTarget()
+            targetLastTarget_()
         end
 
         _pfui_ui_toon_mouse_hover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
 
         if not wasSpellCastSuccessful then
             -- at this point if the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
-            SpellStopTargeting()
+            spellStopTargeting_()
             return nil
         end
 
@@ -1143,7 +1176,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region /pfquickcast@focus
 
     local function _deduceIntendedTarget_forFocus()
-        local pfFocus = pfUI.uf and pfUI.uf.focus
+        local pfFocus = pfui_.uf and pfui_.uf.focus
         if not pfFocus or not pfFocus:IsShown() or pfFocus.label == nil or pfFocus.label == "" then
             return nil -- no focus set
         end
