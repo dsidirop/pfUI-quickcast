@@ -94,7 +94,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local IS_GUID_CASTING_SUPPORTED = false
     local TARGET_GUIDS_STANDARD_LENGTH = -1
     _gameEventsListenerFrame:SetScript("OnEvent", function() -- dont specify arguments as it will break the 'event' var   it is meant to be accessed as a global!
-        if event == "PLAYER_ENTERING_WORLD" then
+        local eventSnapshot = event
+        if eventSnapshot == "PLAYER_ENTERING_WORLD" then
             _isPlayerInDuel = false
 
             PLAYER_OWN_GUID = getUnitGuid_ and getUnitGuid_("player") or nil
@@ -105,12 +106,15 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return
         end
 
-        if event == "CHAT_MSG_SYSTEM" and strlen_(arg1 or "") < 30 and strfind_(strlower_(arg1 or ""), _duelFinalCountDownRegex) then
-            _isPlayerInDuel = true
+        if eventSnapshot == "CHAT_MSG_SYSTEM" then
+            local arg1Snapshot = arg1 or ""
+            if strlen_(arg1Snapshot) < 30 and strfind_(strlower_(arg1Snapshot), _duelFinalCountDownRegex) then
+                _isPlayerInDuel = true
+            end
             return
         end
         
-        if event == "DUEL_FINISHED" then
+        if eventSnapshot == "DUEL_FINISHED" then
             _isPlayerInDuel = false
             return
         end
@@ -240,7 +244,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _cvarAutoSelfCastCached -- getCVar_("AutoSelfCast")  dont
     local function _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
         if intention_is_focus_cast or (pfUI.uf and pfUI.uf.focus and pfUI.uf.focus.label) == proper_target then -- special case
-            hooklessPfuiCastFocus_(spellName) -- this tends to use CastSpellByNameNoQueue in some pfui-forks which is more optimal for emergency casting like insta-heals and interrupts!
+            hooklessPfuiCastFocus_(spellName) -- SlashCmdList.PFCASTFOCUS() essentially   this tends to use CastSpellByNameNoQueue in some pfui-forks which is more optimal for emergency casting like insta-heals and interrupts!
             return
         end
         
