@@ -31,6 +31,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local tableinsert_ = _G.table.insert
     local tableremove_ = _G.table.remove
 
+    local getLocale_ = _G.GetLocale
+    local getMouseFocus_ = _G.GetMouseFocus
+
+    local getUnitGuid_ = GetUnitGuid or UnitGuid -- nampower v3.x vs nampower v2.x
+
     local getCVar_ = _G.GetCVar
     local setCVar_ = _G.SetCVar
     local getSpellCooldown_ = _G.GetSpellCooldown
@@ -66,7 +71,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         ["zhTW"] = "^.*決斗.*: 1$", --            chinese traditional
     }
 
-    _duelFinalCountDownRegex = strlower_(_duelFinalCountDownRegex[GetLocale()] or _duelFinalCountDownRegex["enUS"])
+    _duelFinalCountDownRegex = strlower_(_duelFinalCountDownRegex[getLocale_()] or _duelFinalCountDownRegex["enUS"])
 
     local PLAYER_OWN_GUID = "0x"
     local IS_GUID_CASTING_SUPPORTED = false
@@ -75,9 +80,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         if event == "PLAYER_ENTERING_WORLD" then
             _isPlayerInDuel = false
 
-            PLAYER_OWN_GUID = GetUnitGuid and GetUnitGuid("player") --    nampower v3.x switched over to this
-                    or UnitGuid and UnitGuid("player") --                 nampower v2.x used this
-                    or nil
+            PLAYER_OWN_GUID = getUnitGuid_ and getUnitGuid_("player") or nil
             
             IS_GUID_CASTING_SUPPORTED = type_(PLAYER_OWN_GUID) == "string" and strlen_(PLAYER_OWN_GUID) > 0
             
@@ -158,7 +161,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end)()
 
     local function _tryGetUnitOfFrameHovering()
-        local mouseFrame = GetMouseFocus()
+        local mouseFrame = getMouseFocus_()
 
         return mouseFrame and mouseFrame.label and mouseFrame.id
                 and (mouseFrame.label .. mouseFrame.id)
