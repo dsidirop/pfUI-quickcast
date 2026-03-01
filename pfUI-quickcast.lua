@@ -18,6 +18,7 @@ pfUIQuickCast = _pfUIQuickCast:New() -- globally exported singleton symbol for t
 pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region helpers
+    local type_ = _G.type
     local pairs_ = _G.pairs
     local assert_ = _G.assert
     local unpack_ = _G.unpack
@@ -26,6 +27,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local strfind_ = _G.string.find
     local rawequal_ = _G.rawequal
     local strgfind_ = _G.string.gfind
+    local strlower_ = _G.string.lower
     local tableinsert_ = _G.table.insert
     local tableremove_ = _G.table.remove
 
@@ -64,7 +66,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         ["zhTW"] = "^.*決斗.*: 1$", --            chinese traditional
     }
 
-    _duelFinalCountDownRegex = string.lower(_duelFinalCountDownRegex[GetLocale()] or _duelFinalCountDownRegex["enUS"])
+    _duelFinalCountDownRegex = strlower_(_duelFinalCountDownRegex[GetLocale()] or _duelFinalCountDownRegex["enUS"])
 
     local PLAYER_OWN_GUID = "0x"
     local IS_GUID_CASTING_SUPPORTED = false
@@ -77,13 +79,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                     or UnitGuid and UnitGuid("player") --                 nampower v2.x used this
                     or nil
             
-            IS_GUID_CASTING_SUPPORTED = type(PLAYER_OWN_GUID) == "string" and strlen_(PLAYER_OWN_GUID) > 0
+            IS_GUID_CASTING_SUPPORTED = type_(PLAYER_OWN_GUID) == "string" and strlen_(PLAYER_OWN_GUID) > 0
             
             TARGET_GUIDS_STANDARD_LENGTH = IS_GUID_CASTING_SUPPORTED and strlen_(PLAYER_OWN_GUID) or -1
             return
         end
 
-        if event == "CHAT_MSG_SYSTEM" and strlen_(arg1 or "") < 30 and strfind_(string.lower(arg1 or ""), _duelFinalCountDownRegex) then
+        if event == "CHAT_MSG_SYSTEM" and strlen_(arg1 or "") < 30 and strfind_(strlower_(arg1 or ""), _duelFinalCountDownRegex) then
             _isPlayerInDuel = true
             return
         end
@@ -164,7 +166,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function _isGuid(input)
-        return type(input) == "string"
+        return type_(input) == "string"
                 and strlen_(input) == TARGET_GUIDS_STANDARD_LENGTH
                 and strsub_(input, 1, 2) == "0x"
     end
