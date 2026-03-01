@@ -251,16 +251,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     
     local castSpell_
     local castSpellByName_
-    local castSpellByNameNoQueue_
+    local castSpellNoQueueIfAvailable_
+    local castSpellByNameNoQueueIfAvailable_
     local areLazySnapshotSpellCastFuncsInPlace_ = false
     local function _lazySnapshotSpellCastFuncs()
         if areLazySnapshotSpellCastFuncsInPlace_ then
             return
         end
 
-        castSpell_ = _G.CastSpell --                                                 we need to allow addons like SmartHealer to hook up
-        castSpellByName_ = _G.CastSpellByName --                                     their interceptors on these global functions first
-        castSpellByNameNoQueue_ = _G.CastSpellByNameNoQueue or _G.CastSpellByName -- and then snapshot them hence the lazy binding here
+        castSpell_ = _G.CastSpell -- we need to allow addons like SmartHealer to hook up their interceptors on these global functions first and then snapshot them hence the lazy binding here
+        castSpellNoQueueIfAvailable_ = _G.CastSpellNoQueue or _G.CastSpell  -- also keep in mind that CastSpellNoQueue() doesnt exist in nampower just yet but just in case -> https://gitea.com/avitasia/nampower/issues/31
+        
+        castSpellByName_ = _G.CastSpellByName
+        castSpellByNameNoQueueIfAvailable_ = _G.CastSpellByNameNoQueue or _G.CastSpellByName
 
         targetUnit_ = _G.TargetUnit
         spellTargetUnit_ = _G.SpellTargetUnit
@@ -276,37 +279,41 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local _cvarAutoSelfCastCached -- getCVar_("AutoSelfCast")  dont
-    local function _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
+    local function _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast, is_instant_spell)
         if not areLazySnapshotSpellCastFuncsInPlace_ then _lazySnapshotSpellCastFuncs() end -- lazy-setup once
-        
+
         if intention_is_focus_cast or (pfui_.uf and pfui_.uf.focus and pfui_.uf.focus.label) == proper_target then -- special case
             hooklessPfuiCastFocus_(spellName) -- SlashCmdList.PFCASTFOCUS() essentially   this tends to use CastSpellByNameNoQueue in some pfui-forks which is more optimal for emergency casting like insta-heals and interrupts!
             return
         end
-        
-        if rawequal_(proper_target, _player) or (IS_GUID_CASTING_SUPPORTED and proper_target == PLAYER_OWN_GUID) then
-            castSpellByName_(spellName, 1) -- faster
-            return
+
+        if rawequal_(proper_target, _player) or (IS_GUID_CASTING_SUPPORTED and proper_target == PLAYER_OWN_GUID) then --@formatter:off   snapier
+            if is_instant_spell then castSpellByNameNoQueueIfAvailable_(spellName, 1)
+                                else                   castSpellByName_(spellName, 1) end
+            return --@formatter:on
         end
 
-        if IS_GUID_CASTING_SUPPORTED and strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then
-            castSpellByName_(spellName, proper_target) -- nampower and super_wow guid-based casts
-            return
+        if IS_GUID_CASTING_SUPPORTED and strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then --@formatter:off  nampower and super_wow guid-based casts
+            if is_instant_spell then castSpellByNameNoQueueIfAvailable_(spellName, proper_target)
+                                else                   castSpellByName_(spellName, proper_target) end
+            return --@formatter:on
         end
 
         _cvarAutoSelfCastCached = _cvarAutoSelfCastCached == nil
                 and getCVar_("AutoSelfCast")
                 or _cvarAutoSelfCastCached
 
-        if rawequal_(_cvarAutoSelfCastCached, "0") then
-            castSpell_(spellId, spellBookType) -- faster using spellid
-            return
+        if rawequal_(_cvarAutoSelfCastCached, "0") then --@formatter:off
+            if is_instant_spell then castSpellNoQueueIfAvailable_(spellId, spellBookType)
+                                else                   castSpell_(spellId, spellBookType) end
+            return --@formatter:on
         end
 
-        setCVar_("AutoSelfCast", "0") -- cast without selfcast cvar setting to allow spells to use spelltarget
-        castSpell_(spellId, spellBookType) -- faster using spellid
+        setCVar_("AutoSelfCast", "0") --@formatter:off   cast without selfcast cvar setting to allow spells to use spelltarget
+        if is_instant_spell then castSpellNoQueueIfAvailable_(spellId, spellBookType) -- faster using spellid
+                            else                   castSpell_(spellId, spellBookType) end 
         setCVar_("AutoSelfCast", _cvarAutoSelfCastCached)
-    end
+    end --@formatter:on
 
     local function _strmatch(input, patternString, ...)
         local variadicsArray = arg
@@ -395,7 +402,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     }
 
     local function _isSpellUsable(spell)
-        local spellRawName, rank, _, _, minRange, maxRange, spellId, spellBookType = pfGetSpellInfo_(spell) -- cache-aware
+        local spellRawName, rank, _, castingTime, minRange, maxRange, spellId, spellBookType = pfGetSpellInfo_(spell) -- cache-aware
 
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spell='" .. tostring(spell) .. "'")
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] rank='" .. tostring(rank) .. "'")
@@ -420,13 +427,14 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [isSpellUsable()] [getSpellCooldown_()] alreadyActivated='" .. tostring(alreadyActivated) .. "'")
         -- print("** [pfUI-quickcast] [isSpellUsable()] [getSpellCooldown_()] modRate='" .. tostring(modRate) .. "'")
         -- print("")
-
+        
         return
         spellId,
         spellBookType,
         usedAtTimestamp == 0, -- check if the spell is off cooldown
         minRange == 0 and maxRange == 0 and _non_self_castable_spells[spellRawName] == nil,
-        spellRawName -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
+        spellRawName, -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
+        castingTime == 0 or not castingTime -- instant_spell?
     end
 
     local function _setTargetIfNeededAndCast(
@@ -453,10 +461,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 and (not IS_GUID_CASTING_SUPPORTED or not _isGuid(proper_target))
                 and not unitIsUnit_(proper_target, _target)
 
-        local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget, spellRawName
+        local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget, spellRawName, isInstantSpell
+
         local targetWasToggled, wasSpellCastSuccessful, spellThatQualified = false, false, nil
         for _, spell in spellsArray do
-            spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, spellRawName = _isSpellUsable(spell)
+            spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, spellRawName, isInstantSpell = _isSpellUsable(spell)
 
             if canBeUsed then
                 if not targetWasToggled and not isSpellCastOnSelfOnly then
@@ -477,7 +486,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
                 _pfui_ui_toon_mouse_hover.unit = eventualTarget
 
-                spellCastCallback(spell, spellId, spellBookType, eventualTarget, intention_is_focus_cast) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
+                spellCastCallback(spell, spellId, spellBookType, eventualTarget, intention_is_focus_cast, isInstantSpell) -- this is the actual cast call which can be intercepted by third party addons to autorank the healing spells etc
 
                 if eventualTarget == _player then
                     -- self-casts are 99.9999% successful unless you're low on mana   currently we have problems detecting mana shortages   we live with this for now
@@ -581,10 +590,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- region   /pfquickcast:heal  and  :healself
 
-    function pfUIQuickCast.OnHeal(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
+    function pfUIQuickCast.OnHeal(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast, is_instant_spell)
         -- keep the proper_target parameter even if its not needed per se this method   we want
         -- calls to this method to be hooked-upon/intercepted by third party heal-autoranking addons
-        return _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast)
+        return _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast, is_instant_spell)
     end
 
     local function _deduceIntendedTarget_forFriendlySpells()
