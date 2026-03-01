@@ -217,16 +217,16 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 and pfUI.uf.focus.label ~= ""
                 and pfUI.uf.focus.label ~= nil
                 and rawequal_(proper_target, pfUI.uf.focus.label) then 
-            SlashCmdList.PFCASTFOCUS(spellName)
+            SlashCmdList.PFCASTFOCUS(spellName) -- this tends to use CastSpellByNameNoQueue in some forks which is more optimal for emergency casting like insta-heals and interrupts!
             return
         end
 
-        if rawequal_(proper_target, _player) or (PLAYER_OWN_GUID and proper_target == PLAYER_OWN_GUID) then
+        if rawequal_(proper_target, _player) or (IS_GUID_CASTING_SUPPORTED and proper_target == PLAYER_OWN_GUID) then
             CastSpellByName(spellName, 1) -- faster
             return
         end
 
-        if strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then
+        if IS_GUID_CASTING_SUPPORTED and strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then
             CastSpellByName(spellName, proper_target) -- nampower and super_wow guid-based casts
             return
         end
