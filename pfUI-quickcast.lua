@@ -17,6 +17,9 @@ pfUIQuickCast = _pfUIQuickCast:New() -- globally exported singleton symbol for t
 
 pfUI:RegisterModule("QuickCast", "vanilla", function()
 
+    local MAX_RAID_MEMBERS_ = _G.MAX_RAID_MEMBERS or 40 --         this constant does include the player himself in the raid-count
+    local MAX_OTHER_PARTY_MEMBERS_ = _G.MAX_PARTY_MEMBERS or 4 --  even though the party contains 5 members the player himself is not counted in the MAX_PARTY_MEMBERS so the game sets it 4
+
     -- region helpers
     local type_ = _G.type
     local pairs_ = _G.pairs
@@ -116,17 +119,19 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _party_spell_target_units = (function()
         local standardSpellTargets = { }
 
-        for i = 1, MAX_PARTY_MEMBERS do
+        for i = 1, MAX_OTHER_PARTY_MEMBERS_ do
+            -- adds party1, party2, party3, party4     but intentionally omits party0 which is the player himself because we add "player" for that down below
             tableinsert_(standardSpellTargets, "party" .. i)
         end
 
-        for i = 1, MAX_PARTY_MEMBERS do
+        for i = 1, MAX_OTHER_PARTY_MEMBERS_ do
             -- these are the most rare mouse-hovering scenarios so we check them last
             tableinsert_(standardSpellTargets, "partypet" .. i)
         end
 
+        tableinsert_(standardSpellTargets, "pet") --    vital to add this one for when the player himself has a pet
         tableinsert_(standardSpellTargets, "player") -- vital to add this one as well because as it turns out party1->4 doesnt match properly with UnitIsUnit()
-
+        
         -- tableinsert_(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
         return standardSpellTargets
@@ -138,21 +143,25 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
         local standardSpellTargets = { }
 
-        for i = 1, MAX_PARTY_MEMBERS do
+        for i = 1, MAX_OTHER_PARTY_MEMBERS_ do
+            -- adds party1, party2, party3, party4     but intentionally omits party0 which is the player himself because we add "player" for that down below
             tableinsert_(standardSpellTargets, "party" .. i)
         end
-        for i = 1, MAX_RAID_MEMBERS do
+        for i = 1, MAX_RAID_MEMBERS_ do
+            -- adds raid1, raid2, ..., raid40    this does include the player himself somewhere in the raid
             tableinsert_(standardSpellTargets, "raid" .. i)
         end
 
-        for i = 1, MAX_PARTY_MEMBERS do
+        for i = 1, MAX_OTHER_PARTY_MEMBERS_ do
             -- pets are more rare targets 
             tableinsert_(standardSpellTargets, "partypet" .. i)
         end
-        for i = 1, MAX_RAID_MEMBERS do
+        for i = 1, MAX_RAID_MEMBERS_ do
+            -- adds raidpet1, raidpet2, ..., raidpet40    this does include the player-pet somewhere in the raid-pets
             tableinsert_(standardSpellTargets, "raidpet" .. i)
         end
 
+        tableinsert_(standardSpellTargets, "pet") --    vital to add this one for when the player himself has a pet
         tableinsert_(standardSpellTargets, "player") -- vital to add this as well
 
         -- tableinsert_(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
