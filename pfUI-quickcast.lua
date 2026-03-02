@@ -451,12 +451,12 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         end
 
         -- it is obvious that there is no need to target toggle over to the desired target if we are already targeting it!
-        -- likewise if the target is a guid we dont need the target-toggle either
+        -- likewise if the setup supports guid-casting we dont need target-toggling trickery
         -- we also dont need the target toggling hack if the target is the player himself
         use_target_toggle_workaround = use_target_toggle_workaround
+                and not IS_GUID_CASTING_SUPPORTED
                 and not rawequal_(proper_target, _target)
                 and not rawequal_(proper_target, _player)
-                and (not IS_GUID_CASTING_SUPPORTED or not _isGuid(proper_target))
                 and not unitIsUnit_(proper_target, _target)
 
         local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget, spellRawName, isInstantSpell
