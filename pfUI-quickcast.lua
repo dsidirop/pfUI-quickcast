@@ -56,7 +56,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local getLocale_ = _G.GetLocale
     local getMouseFocus_ = _G.GetMouseFocus
 
-    local getUnitGuid_ = _G.GetUnitGuid or _G.UnitGuid -- nampower v3.x vs nampower v2.x
+    local getUnitGuid_ = _G.GetUnitGUID or _G.UnitGUID -- nampower v3.x vs nampower v2.x
 
     local getCVar_ = _G.GetCVar
     local setCVar_ = _G.SetCVar
