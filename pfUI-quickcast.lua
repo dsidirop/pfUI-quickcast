@@ -254,13 +254,16 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local castSpellNoQueueIfAvailable_
     local castSpellByNameNoQueueIfAvailable_
     local areLazySnapshotSpellCastFuncsInPlace_ = false
+
+    -- we need to allow addons like SmartHealer to hook up their interceptors on these global functions first and then snapshot them hence the lazy binding
+    -- here   also keep in mind that CastSpellNoQueue() doesnt exist in nampower just yet but just in case -> https://gitea.com/avitasia/nampower/issues/31
     local function _lazySnapshotSpellCastFuncs()
         if areLazySnapshotSpellCastFuncsInPlace_ then
             return
         end
 
-        castSpell_ = _G.CastSpell -- we need to allow addons like SmartHealer to hook up their interceptors on these global functions first and then snapshot them hence the lazy binding here
-        castSpellNoQueueIfAvailable_ = _G.CastSpellNoQueue or _G.CastSpell  -- also keep in mind that CastSpellNoQueue() doesnt exist in nampower just yet but just in case -> https://gitea.com/avitasia/nampower/issues/31
+        castSpell_ = _G.CastSpell --@formatter:off   currently not used because it doesnt support passing in the target-parameter which is counter-productive for snappy casting
+        castSpellNoQueueIfAvailable_ = _G.CastSpellNoQueue --   for nampower>=3.1
         
         castSpellByName_ = _G.CastSpellByName
         castSpellByNameNoQueueIfAvailable_ = _G.CastSpellByNameNoQueue or _G.CastSpellByName
@@ -279,6 +282,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local _cvarAutoSelfCastCached -- getCVar_("AutoSelfCast")  dont
+    local _cvarAutoSelfCastCachedIsDisabled
     local function _onCast(spellName, spellId, spellBookType, proper_target, intention_is_focus_cast, is_instant_spell)
         if not areLazySnapshotSpellCastFuncsInPlace_ then _lazySnapshotSpellCastFuncs() end -- lazy-setup once
 
@@ -293,26 +297,20 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return --@formatter:on
         end
 
-        if IS_GUID_CASTING_SUPPORTED and strlen_(proper_target) == TARGET_GUIDS_STANDARD_LENGTH and strsub_(proper_target, 1, 2) == "0x" then --@formatter:off  nampower and super_wow guid-based casts
-            if is_instant_spell then castSpellByNameNoQueueIfAvailable_(spellName, proper_target)
-                                else                   castSpellByName_(spellName, proper_target) end
-            return --@formatter:on
+        if IS_GUID_CASTING_SUPPORTED then
+            proper_target = getUnitGuid_(proper_target) -- if guid casting is supported
         end
 
-        _cvarAutoSelfCastCached = _cvarAutoSelfCastCached == nil
-                and getCVar_("AutoSelfCast")
-                or _cvarAutoSelfCastCached
-
-        if rawequal_(_cvarAutoSelfCastCached, "0") then --@formatter:off
-            if is_instant_spell then castSpellNoQueueIfAvailable_(spellId, spellBookType)
-                                else                   castSpell_(spellId, spellBookType) end
-            return --@formatter:on
+        if _cvarAutoSelfCastCached == nil then
+            _cvarAutoSelfCastCached = getCVar_("AutoSelfCast")
+            _cvarAutoSelfCastCachedIsDisabled = _cvarAutoSelfCastCached == nil or _cvarAutoSelfCastCached == "0"
         end
 
-        setCVar_("AutoSelfCast", "0") --@formatter:off   cast without selfcast cvar setting to allow spells to use spelltarget
-        if is_instant_spell then castSpellNoQueueIfAvailable_(spellId, spellBookType) -- faster using spellid
-                            else                   castSpell_(spellId, spellBookType) end 
-        setCVar_("AutoSelfCast", _cvarAutoSelfCastCached)
+        _ = _cvarAutoSelfCastCachedIsDisabled or setCVar_("AutoSelfCast", "0") --@formatter:off   cast without selfcast cvar setting to allow spells to use spelltarget
+            if is_instant_spell and     castSpellNoQueueIfAvailable_ then       castSpellNoQueueIfAvailable_(spellId, spellBookType, proper_target) -- fastest
+        elseif is_instant_spell and not castSpellNoQueueIfAvailable_ then castSpellByNameNoQueueIfAvailable_(spellName, proper_target) -- a bit slower
+                                                                     else                   castSpellByName_(spellName, proper_target) end -- unfortunately nampower doesnt support spell-casting via CastSpell()   only CastSpellNoQueue() supports the target-parameter!
+        _ = _cvarAutoSelfCastCachedIsDisabled or setCVar_("AutoSelfCast", _cvarAutoSelfCastCached)
     end --@formatter:on
 
     local function _strmatch(input, patternString, ...)
@@ -496,6 +494,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 end
 
                 if spellIsTargeting_() then
+                    print("** [pfUI-quickcast] spell '" .. tostring(spell) .. "' is awaiting a target to be specified which will be set to '" .. tostring(eventualTarget) .. "' via spellTargetUnit_()")
+                    
                     -- if the spell is awaiting a target to be specified ...
                     spellTargetUnit_(eventualTarget)
                 end
