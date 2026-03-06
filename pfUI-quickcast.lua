@@ -443,8 +443,10 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             intention_is_to_assist_only_friendly_targets,
             intention_is_focus_cast
     )
-        if not areLazySnapshotSpellCastFuncsInPlace_ then _lazySnapshotSpellCastFuncs() end -- lazy-setup once
-        
+        if not areLazySnapshotSpellCastFuncsInPlace_ then
+            _lazySnapshotSpellCastFuncs() -- lazy-setup once
+        end
+
         local spellsArray = _parseSpellsString(spellsString)
         if not spellsArray then
             return nil
@@ -497,9 +499,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
                     -- if the spell is awaiting a target to be specified ...
                     spellTargetUnit_(eventualTarget)
+                    wasSpellCastSuccessful = not spellIsTargeting_()
+                else
+                    wasSpellCastSuccessful = true
                 end
 
-                wasSpellCastSuccessful = not spellIsTargeting_()
                 if wasSpellCastSuccessful then
                     spellThatQualified = spell
                     break
@@ -514,7 +518,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         _pfui_ui_toon_mouse_hover.unit = nil -- remove temporary mouseover unit in the mouseover module of pfui
 
         if not wasSpellCastSuccessful then
-            -- at this point if the spell is still awaiting for a target then either there was an error or targeting is impossible   in either case need to clean up spell target
+            -- at this point if the spell is still awaiting for a target then either there was
+            -- an error or targeting is impossible   in either case need to clean up spell target
             spellStopTargeting_()
             return nil
         end
