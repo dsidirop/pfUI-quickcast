@@ -494,7 +494,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 end
 
                 if spellIsTargeting_() then
-                    print("** [pfUI-quickcast] spell '" .. tostring(spell) .. "' is awaiting a target to be specified which will be set to '" .. tostring(eventualTarget) .. "' via spellTargetUnit_()")
+                    -- print("** [pfUI-quickcast] spell '" .. tostring(spell) .. "' is awaiting a target to be specified which will be set to '" .. tostring(eventualTarget) .. "' via spellTargetUnit_()")
                     
                     -- if the spell is awaiting a target to be specified ...
                     spellTargetUnit_(eventualTarget)
