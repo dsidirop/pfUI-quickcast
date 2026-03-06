@@ -411,11 +411,11 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         -- print("** [pfUI-quickcast] [isSpellUsable()] [pfGetSpellInfo_()] spellBookType='" .. tostring(spellBookType) .. "'")
 
         if not rank then
-            return false -- check if the player indeed knows this spell   maybe he hasnt specced for it
+            return nil -- check if the player indeed knows this spell   maybe he hasnt specced for it
         end
 
         if not spellId then
-            return false -- spell not found   shouldnt happen here but just in case
+            return nil -- spell not found   shouldnt happen here but just in case
         end
 
         local usedAtTimestamp = getSpellCooldown_(spellId, spellBookType)
@@ -464,8 +464,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         local targetWasToggled, wasSpellCastSuccessful, spellThatQualified = false, false, nil
         for _, spell in spellsArray do
             spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, spellRawName, isInstantSpell = _isSpellUsable(spell)
-
-            if canBeUsed then
+            if spellId ~= nil and canBeUsed then
                 if not targetWasToggled and not isSpellCastOnSelfOnly then
                     -- unfortunately holy shock is buggy when an enemy is targeted   it will cast on the enemy instead of the friendly target being hovered by the mouse
                     if use_target_toggle_workaround or (
@@ -495,7 +494,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
                 if spellIsTargeting_() then
                     -- print("** [pfUI-quickcast] spell '" .. tostring(spell) .. "' is awaiting a target to be specified which will be set to '" .. tostring(eventualTarget) .. "' via spellTargetUnit_()")
-                    
+
                     -- if the spell is awaiting a target to be specified ...
                     spellTargetUnit_(eventualTarget)
                 end
