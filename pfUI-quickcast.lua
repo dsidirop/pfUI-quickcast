@@ -615,6 +615,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             return unitOfFrameHovering, true -- unit is friendly but it is not in the player's team    we must use target swapping 
         end
 
+        -- UnitIsUnit(_toon_mouse_hover, _player) --dont   this always returns 'nil'   it can never work in vanilla 1.12 due to the design of the game itself
+        
         -- unitExists_(_toon_mouse_hover) no need to check this here
         if unitCanAssist_(_player, _toon_mouse_hover) and not unitIsDeadOrGhost_(_toon_mouse_hover) then
             --00 mouse hovering directly over friendly player-toons in the game-world?

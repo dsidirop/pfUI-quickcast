@@ -80,8 +80,15 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
 
   <br/>- If no suitable target is found in the above cases, the spell will **not** be cast even if you have AutoSelfCast=true in your CVars. This behaviour is by design
   the exact opposite to what '/pfcast' does, so that you won't accidentally heal yourself when you meant to heal someone else thus wasting both mana and precious time in a raid context.
-  
-  <br/>- Note that you can in fact specify multiple healing spells in a single macro. If the first spell is not castable due to cooldown or because you haven't picked it in your talent
+
+  <br/>- Note that there is a known limitation when it comes to mouse-hovering over your own 3D character in the sense that such a mouse-hover is totally ignored by the game
+  by design and any attempt to heal yourself by mouse-hovering over your 3D character will be ignored.<br/><br/>
+
+  The workaround is easy:<br/><br/>
+
+  You can mouse-hover over your character's healthbar instead - you can move your healthbar closer to the center of your screen to make it easier to heal yourself in this way.
+
+  <br/>- Also note that you can in fact specify multiple healing spells in a single macro. If the first spell is not castable due to cooldown or because you haven't picked it in your talent
   tree, the next one will be tried to be cast and so on:
   
   <br/>A typical use-case of this feature is with the Paladin's 'Holy Shock' talent:
