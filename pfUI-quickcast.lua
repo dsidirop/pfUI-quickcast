@@ -30,6 +30,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     
     -- region helpers
     local pfui_ = _G.pfUI
+    local unitxp_ = _G.UnitXP
+    local superWowUnitPosition_ = _G.SUPERWOW_VERSION and _G.UnitPosition
+    
     local type_ = _G.type
     local pairs_ = _G.pairs
     local assert_ = _G.assert
@@ -127,6 +130,42 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end)
     
     local _pfui_ui_toon_mouse_hover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
+
+    --local function _foobar()
+    --    return UnitXP.distanceBetween
+    --end
+    
+    local function _getUnitDistanceFromPlayer(targetUnit) -- todo  contemplate throttling and caching a bit to help with performance when spamming spells
+        unitxp_ = unitxp_ or _G.UnitXP
+        superWowUnitPosition_ = superWowUnitPosition_ or (_G.SUPERWOW_VERSION and _G.UnitPosition)
+        
+        if targetUnit == _player or unitIsUnit_(targetUnit, _player) then
+            return 0
+        end
+
+        if not UnitExists(targetUnit) then
+            return nil
+        end
+
+        if unitxp_ then -- UnitXP:distanceBetween()   most accurate
+            local distance = unitxp_("distanceBetween", targetUnit, _player)
+            if distance then
+                return distance
+            end
+        end
+
+        if superWowUnitPosition_ then -- SuperWoW:UnitPosition()   less accurate
+            local x1, y1, z1 = superWowUnitPosition_(_player)
+            local x2, y2, z2 = superWowUnitPosition_(targetUnit)
+            if x1 and y1 and z1 and x2 and y2 and z2 then
+                return ((x2 - x1) ^ 2
+                        + (y2 - y1) ^ 2
+                        + (z2 - z1) ^ 2) ^ 0.5
+            end
+        end
+
+        return nil
+    end
     
     local _solo_spell_target_units = (function()
         local standardSpellTargets = { }
@@ -134,7 +173,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         tableinsert_(standardSpellTargets, _target) -- most common target so we check this first
         tableinsert_(standardSpellTargets, _player) -- these are the most rare mouse-hovering scenarios so we check them last
         tableinsert_(standardSpellTargets, _pet)
-
+    
         -- tableinsert_(standardSpellTargets, _target_of_target)  dont  it doesnt work as a spell target unit
 
         return standardSpellTargets
@@ -432,7 +471,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         usedAtTimestamp == 0, -- check if the spell is off cooldown
         minRange == 0 and maxRange == 0 and _non_self_castable_spells[spellRawName] == nil,
         spellRawName, -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
-        castingTime == 0 or not castingTime -- instant_spell?
+        castingTime == 0 or not castingTime, -- instant_spell?
+        minRange ~= nil and minRange or 0,
+        maxRange
     end
 
     local function _setTargetIfNeededAndCast(
@@ -461,11 +502,18 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 and not rawequal_(proper_target, _player)
                 and not unitIsUnit_(proper_target, _target)
 
-        local spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget, spellRawName, isInstantSpell
+        local distanceFromTarget, spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, eventualTarget, spellRawName, isInstantSpell, minRange, maxRange
 
         local targetWasToggled, wasSpellCastSuccessful, spellThatQualified = false, false, nil
         for _, spell in spellsArray do
-            spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, spellRawName, isInstantSpell = _isSpellUsable(spell)
+            spellId, spellBookType, canBeUsed, isSpellCastOnSelfOnly, spellRawName, isInstantSpell, minRange, maxRange = _isSpellUsable(spell)
+
+            if spellId ~= nil and canBeUsed and not isSpellCastOnSelfOnly and proper_target ~= _player and maxRange ~= nil and maxRange < 80 then
+                distanceFromTarget = distanceFromTarget or _getUnitDistanceFromPlayer(proper_target)
+                
+                canBeUsed = distanceFromTarget == nil or distanceFromTarget <= maxRange + 1 -- add a tiny bit of leeway to the max range because sometimes the range detection is just a bit off
+            end
+            
             if spellId ~= nil and canBeUsed then
                 if not targetWasToggled and not isSpellCastOnSelfOnly then
                     -- unfortunately holy shock is buggy when an enemy is targeted   it will cast on the enemy instead of the friendly target being hovered by the mouse
