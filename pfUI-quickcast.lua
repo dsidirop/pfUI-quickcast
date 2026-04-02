@@ -519,7 +519,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                     -- unfortunately holy shock is buggy when an enemy is targeted   it will cast on the enemy instead of the friendly target being hovered by the mouse
                     if use_target_toggle_workaround or (
                             intention_is_to_assist_only_friendly_targets
-                                    and (spellRawName == "Holy Shock" or spellRawName == "Chastise")
+                                    and (spellRawName == "Holy Shock" or spellRawName == "Chastise" or spellRawName == "Dampen Magic" or spellRawName == "Amplify Magic")
                                     and not unitIsFriend_(_player, _target)
                     ) then
                         targetWasToggled = true
