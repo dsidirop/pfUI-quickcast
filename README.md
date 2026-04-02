@@ -28,7 +28,8 @@ Should also work with the TBC (2.4.3) client but it hasn't been tested yet.
 
        <Your Warcraft Directory>\Interface\AddOns
 
-5. Restart World of Warcraft
+5. (Optional) Install UnitXP or SuperWoW for an optimum experience (less lag and built-in range-checks)
+6. Restart World of Warcraft
 
 
 ## 🚑  Heal-Auto-Ranking Addons Supporting '/pfquickcast@heal*' Commands
