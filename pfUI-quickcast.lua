@@ -165,12 +165,32 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function _isSpellTargetInRangeForSpell(spellRawName, spellMaxRange, targetUnit, possiblePrecalculatedDistanceFromTarget)
-        namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
-
-        if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
+        if possiblePrecalculatedDistanceFromTarget ~= nil then -- fast path
             return
-            namPowerIsSpellInRange_(spellRawName, targetUnit) > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
+            possiblePrecalculatedDistanceFromTarget <= spellMaxRange,
             possiblePrecalculatedDistanceFromTarget
+        end
+
+        namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
+        if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
+
+            if spellRawName == "Power Word: Shield" then
+                -- stupid workaround for an apparent bug in nampower which causes the
+                -- range-check to fail for specific spells like priest-shields and paladin-hands
+                spellRawName = "Flash Heal"
+
+            elseif spellRawName == "Hand of Protection" or spellRawName == "Hand of Sacrifice" then
+                spellRawName = "Hand of Freedom"
+            end
+            
+            local isSpellInRangeVerdict = namPowerIsSpellInRange_(spellRawName, targetUnit)
+            if isSpellInRangeVerdict ~= nil and isSpellInRangeVerdict >= 0 then
+                -- even with the spell-normalization above it is conceivable that the nampower-spell-check might fail
+                -- in which case we will have to resort to the casual direct-distance-check which is more reliable
+                return
+                isSpellInRangeVerdict > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
+                nil
+            end
         end
 
         if possiblePrecalculatedDistanceFromTarget == nil then
@@ -539,6 +559,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 else
                     canBeUsed, distanceFromTargetCalcedOnce = _isSpellTargetInRangeForSpell(spellRawName, maxRange, proper_target, distanceFromTargetCalcedOnce)
                 end
+
+                -- print("** distanceFromTargetCalcedOnce=" .. tostring(distanceFromTargetCalcedOnce) .. " for spell '" .. tostring(spell) .. "' canBeUsed=" .. tostring(canBeUsed) .. " with maxRange=" .. tostring(maxRange) .. " and target='" .. tostring(proper_target) .. "'")
             end
             
             if spellId ~= nil and canBeUsed then
