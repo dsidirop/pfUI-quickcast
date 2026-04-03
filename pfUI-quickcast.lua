@@ -168,6 +168,16 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
 
         if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
+
+            if spellRawName == "Power Word: Shield" then
+                -- stupid workaround for an apparent bug in nampower which causes the
+                -- range-check to fail for specific spells like priest-shields and paladin-hands
+                spellRawName = "Flash Heal"
+
+            elseif spellRawName == "Hand of Protection" or spellRawName == "Hand of Sacrifice" then
+                spellRawName = "Hand of Freedom"
+            end
+
             return
             namPowerIsSpellInRange_(spellRawName, targetUnit) > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
             possiblePrecalculatedDistanceFromTarget
@@ -539,6 +549,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 else
                     canBeUsed, distanceFromTargetCalcedOnce = _isSpellTargetInRangeForSpell(spellRawName, maxRange, proper_target, distanceFromTargetCalcedOnce)
                 end
+
+                -- print("** distanceFromTargetCalcedOnce=" .. tostring(distanceFromTargetCalcedOnce) .. " for spell '" .. tostring(spell) .. "' canBeUsed=" .. tostring(canBeUsed) .. " with maxRange=" .. tostring(maxRange) .. " and target='" .. tostring(proper_target) .. "'")
             end
             
             if spellId ~= nil and canBeUsed then
