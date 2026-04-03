@@ -177,10 +177,15 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             elseif spellRawName == "Hand of Protection" or spellRawName == "Hand of Sacrifice" then
                 spellRawName = "Hand of Freedom"
             end
-
-            return
-            namPowerIsSpellInRange_(spellRawName, targetUnit) > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
-            possiblePrecalculatedDistanceFromTarget
+            
+            local isSpellInRangeVerdict = namPowerIsSpellInRange_(spellRawName, targetUnit) > 0
+            if isSpellInRangeVerdict ~= nil and isSpellInRangeVerdict >= 0 then
+                -- even with the spell-normalization above it is conceivable that the nampower-spell-check might fail
+                -- in which case we will have to resort to the casual direct-distance-check which is more reliable
+                return
+                isSpellInRangeVerdict > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
+                possiblePrecalculatedDistanceFromTarget
+            end
         end
 
         if possiblePrecalculatedDistanceFromTarget == nil then
