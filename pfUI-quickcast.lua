@@ -50,6 +50,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local unitIsUnit_ = _G.UnitIsUnit -- because 3rd party addons dont care to wire-up interceptors on these
     local unitIsDead_ = _G.UnitIsDead
     local unitIsFriend_ = _G.UnitIsFriend
+    local unitIsVisible_ = _G.UnitIsVisible
     local unitCanAssist_ = _G.UnitCanAssist
     local unitIsDeadOrGhost_ = _G.UnitIsDeadOrGhost
     
@@ -136,17 +137,15 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     --end
     
     local function _getUnitDistanceFromPlayer(targetUnit) -- todo  contemplate throttling and caching a bit to help with performance when spamming spells
-        unitxp_ = unitxp_ or _G.UnitXP
-        superWowUnitPosition_ = superWowUnitPosition_ or (_G.SUPERWOW_VERSION and _G.UnitPosition)
-        
         if targetUnit == _player or unitIsUnit_(targetUnit, _player) then
             return 0
         end
 
-        if not UnitExists(targetUnit) then
+        if not unitExists_(targetUnit) or not unitIsVisible_(targetUnit) then
             return nil
         end
 
+        unitxp_ = unitxp_ or _G.UnitXP
         if unitxp_ then -- UnitXP:distanceBetween()   most accurate
             local distance = unitxp_("distanceBetween", targetUnit, _player)
             if distance then
@@ -154,6 +153,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
             end
         end
 
+        superWowUnitPosition_ = superWowUnitPosition_ or (_G.SUPERWOW_VERSION and _G.UnitPosition)
         if superWowUnitPosition_ then -- SuperWoW:UnitPosition()   less accurate
             local x1, y1, z1 = superWowUnitPosition_(_player)
             local x2, y2, z2 = superWowUnitPosition_(targetUnit)
@@ -473,7 +473,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         spellRawName, -- check if the spell is only cast-on-self by sniffing the min/max ranges of it
         castingTime == 0 or not castingTime, -- instant_spell?
         minRange ~= nil and minRange or 0,
-        maxRange
+        maxRange ~= nil and maxRange or 200
     end
 
     local function _setTargetIfNeededAndCast(
