@@ -165,8 +165,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function _isSpellTargetInRangeForSpell(spellRawName, spellMaxRange, targetUnit, possiblePrecalculatedDistanceFromTarget)
-        namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
+        if possiblePrecalculatedDistanceFromTarget ~= nil then -- fast path
+            return
+            possiblePrecalculatedDistanceFromTarget <= spellMaxRange,
+            possiblePrecalculatedDistanceFromTarget
+        end
 
+        namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
         if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
 
             if spellRawName == "Power Word: Shield" then
@@ -178,13 +183,13 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 spellRawName = "Hand of Freedom"
             end
             
-            local isSpellInRangeVerdict = namPowerIsSpellInRange_(spellRawName, targetUnit) > 0
+            local isSpellInRangeVerdict = namPowerIsSpellInRange_(spellRawName, targetUnit)
             if isSpellInRangeVerdict ~= nil and isSpellInRangeVerdict >= 0 then
                 -- even with the spell-normalization above it is conceivable that the nampower-spell-check might fail
                 -- in which case we will have to resort to the casual direct-distance-check which is more reliable
                 return
                 isSpellInRangeVerdict > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
-                possiblePrecalculatedDistanceFromTarget
+                nil
             end
         end
 
