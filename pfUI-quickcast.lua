@@ -181,7 +181,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 -- we will remove this workaround in 2028 when this mechanism has stabilized a bit more 
                 spellRawName = "Flash Heal"
 
-            elseif spellRawName == "Hand of Protection" or spellRawName == "Hand of Sacrifice" then
+            elseif spellRawName == "Hand of Protection" or spellRawName == "Hand of Sacrifice" or spellRawName == "Redemption" then
                 spellRawName = "Hand of Freedom"
             end
             
