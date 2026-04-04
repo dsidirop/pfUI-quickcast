@@ -175,8 +175,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
 
             if spellRawName == "Power Word: Shield" then
-                -- stupid workaround for an apparent bug in nampower which causes the
+                -- stupid workaround for an apparent bug plaguing nampower<=4.3.0 which causes the
                 -- range-check to fail for specific spells like priest-shields and paladin-hands
+                -- we will remove this workaround in 2028 when this mechanism has stabilized a bit more 
                 spellRawName = "Flash Heal"
 
             elseif spellRawName == "Hand of Protection" or spellRawName == "Hand of Sacrifice" then
