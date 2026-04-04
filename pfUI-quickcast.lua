@@ -51,7 +51,6 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local unitIsUnit_ = _G.UnitIsUnit -- because 3rd party addons dont care to wire-up interceptors on these
     local unitIsDead_ = _G.UnitIsDead
     local unitIsFriend_ = _G.UnitIsFriend
-    local unitIsVisible_ = _G.UnitIsVisible
     local unitCanAssist_ = _G.UnitCanAssist
     local unitIsDeadOrGhost_ = _G.UnitIsDeadOrGhost
     
@@ -176,7 +175,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
         if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
 
-            if spellRawName == "Power Word: Shield" then
+            if spellRawName == "Power Word: Shield" or spellRawName == "Prayer of Healing" then
                 -- stupid workaround for an apparent bug plaguing nampower<=4.3.0 which causes the
                 -- range-check to fail for specific spells like priest-shields and paladin-hands
                 -- we will remove this workaround in 2028 when this mechanism has stabilized a bit more 
