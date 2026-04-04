@@ -134,13 +134,8 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     local _pfui_ui_toon_mouse_hover = (pfUI and pfUI.uf and pfUI.uf.mouseover) or {} -- store the original mouseover module if its present or fallback to a placeholder
 
     local function _getUnitDistanceFromPlayer(targetUnit) -- todo  contemplate throttling and caching a bit to help with performance when spamming spells
-        if targetUnit == _player or unitIsUnit_(targetUnit, _player) then
-            return 0
-        end
-
-        if not unitExists_(targetUnit) or not unitIsVisible_(targetUnit) then
-            return nil
-        end
+        -- if targetUnit == _player or unitIsUnit_(targetUnit, _player) then return 0 end        -- these checks are already performed by
+        -- if not unitExists_(targetUnit) or not unitIsVisible_(targetUnit) then return nil end  -- other parts of the overall mechanism
 
         unitxp_ = unitxp_ or _G.UnitXP
         if unitxp_ then -- UnitXP:distanceBetween()   most accurate
@@ -165,11 +160,18 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function _isSpellTargetInRangeForSpell(spellRawName, spellMaxRange, targetUnit, possiblePrecalculatedDistanceFromTarget)
-        if possiblePrecalculatedDistanceFromTarget ~= nil then -- fast path
+        if possiblePrecalculatedDistanceFromTarget ~= nil then -- fast path   just in case
             return
             possiblePrecalculatedDistanceFromTarget <= spellMaxRange,
             possiblePrecalculatedDistanceFromTarget
         end
+
+        if targetUnit == _player or unitIsUnit_(targetUnit, _player) then
+            -- obvious self-casting
+            return true, 0
+        end
+
+        -- if not unitExists_(targetUnit) or not unitIsVisible_(targetUnit) then ... -- nah  no point to add overhead with this kind of check really
 
         namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
         if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
