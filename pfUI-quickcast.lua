@@ -175,7 +175,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
         if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
 
-            if spellRawName == "Power Word: Shield" or spellRawName == "Prayer of Healing" then
+            if spellRawName == "Power Word: Shield" or spellRawName == "Prayer of Healing" or spellRawName == "Resurrection" then
                 -- stupid workaround for an apparent bug plaguing nampower<=4.3.0 which causes the
                 -- range-check to fail for specific spells like priest-shields and paladin-hands
                 -- we will remove this workaround in 2028 when this mechanism has stabilized a bit more 
@@ -193,6 +193,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 isSpellInRangeVerdict > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
                 nil
             end
+
+            print("** [pfUI-quickcast] [warning] [isSpellTargetInRangeForSpell()] Nampower:IsSpellInRange() failed to check range for spell '" .. tostring(spellRawName) ..
+                    "' and target '" .. tostring(targetUnit) .. "' so we will revert to standard distance-checking - if you believe the spell is valid report this to https://gitea.com/avitasia/nampower")
         end
 
         if possiblePrecalculatedDistanceFromTarget == nil then
@@ -290,7 +293,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function _tryTranslateUnitToStandardSpelltargetUnit_(unit)
-        if IS_GUID_CASTING_SUPPORTED and _isGuid(input) then
+        if IS_GUID_CASTING_SUPPORTED and _isGuid(unit) then
             -- we dont want to loop over all the standard spell target units if we already have a guid as input
             -- we can directly use it as a spell target unit without any translation
             return unit
@@ -1333,6 +1336,101 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@focus
 
+    -- region /pfquickcast@enemytbfc
+
+    local function _deduceIntendedTarget_forEnemyTargetedByFocus()
+        _lazySnapshotSpellCastFuncs() -- needed by targetUnit_
+
+        local unitOfFocus = _deduceIntendedTarget_forFocus()
+        if not unitOfFocus or not unitIsFriend_(_player, unitOfFocus) or unitIsDeadOrGhost_(unitOfFocus) then
+            return nil, false
+        end
+
+        local switchedToFocusTargetFirst = false
+        if not unitIsUnit_(_target, unitOfFocus) then
+            targetUnit_(unitOfFocus)
+            switchedToFocusTargetFirst = true
+        end
+
+        if not unitIsFriend_(_player, _target_of_target) and not unitIsDeadOrGhost_(_target_of_target) then
+            targetUnit_(_target_of_target) -- switch to the target of the focus
+            return _target, false
+        end
+
+        if switchedToFocusTargetFirst then -- reset back to last target if the focus target wasnt targeting a valid enemy unit
+            targetLastTarget_()    
+        end
+        
+        return nil, false -- no valid target found
+    end
+
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC1 = "/pfquickcast@enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC2 = "/pfquickcast:enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC3 = "/pfquickcast.enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC4 = "/pfquickcast_enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC5 = "/pfquickcastenemytbfc"
+    function SlashCmdList.PFQUICKCAST_ENEMY_TBFC(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround = _deduceIntendedTarget_forEnemyTargetedByFocus()
+        if proper_target == nil then
+            return nil
+        end
+
+        return _setTargetIfNeededAndCast(
+                _onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
+        )
+    end
+
+    -- endregion /pfquickcast@enemytbfc
+
+    -- region /pfquickcast@enemytbfco
+
+    local function _deduceIntendedTarget_forEnemyTargetedByFocusOnce()
+        if not unitIsFriend_(_player, _target) and not unitIsDeadOrGhost_(_target) then
+            return _target, false -- if the current target is already a valid enemy unit then we can just go with it
+        end
+
+        local properTarget, shouldToggle = _deduceIntendedTarget_forEnemyTargetedByFocus() -- otherwise use /pfquickcast@enemytbfc logic to get the enemy unit
+        
+        return properTarget, shouldToggle
+    end
+
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO1 = "/pfquickcast@enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO2 = "/pfquickcast:enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO3 = "/pfquickcast.enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO4 = "/pfquickcast_enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO5 = "/pfquickcastenemytbfco"
+    function SlashCmdList.PFQUICKCAST_ENEMY_TBFCO(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround = _deduceIntendedTarget_forEnemyTargetedByFocusOnce()
+        if proper_target == nil then
+            return nil
+        end
+
+        return _setTargetIfNeededAndCast(
+                _onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
+        )
+    end
+
+    -- endregion /pfquickcast@enemytbfco
 
     -- region /pfquickcast@healfocus
 
