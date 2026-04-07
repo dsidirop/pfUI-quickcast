@@ -290,7 +290,9 @@ then the command will do nothing. Use with caution as it will change your curren
 
 - `/pfquickcast@enemytbfco <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ENEMY_TBFCO("<spell_name>")` )
 
-Like @enemytbfc but grabs the enemy once and sticks with it until it dies.
+Like @enemytbfc but grabs the enemy once and sticks with it until it dies. It doesn't continuously regrab the target of the focused-unit like @enemytbfc does.
+This is useful for boss fights with tank swaps where you want to make sure that your DPS will stick to the current boss target of the tank until it dies
+and won't suffer the overhead of continuously re-grabbing the target of the focused-unit (very important for spammable spells that insta-cast or near instant cast)
 
 - `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 
