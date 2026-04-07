@@ -55,19 +55,20 @@ The following flavors are interceptable by the [SmartHealer (extended)](https://
 
 The following flavors are (intentionally) **ignored** by the [SmartHealer (extended)](https://github.com/dsidirop/SmartHealer) addon and will thus cast the given spell as-is:
 
-| Command                                       | LUA                                                           | Description                                                                            |
-|-----------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `/pfquickcast@any Holy Shock`                 | `SlashCmdList.PFQUICKCAST_ANY("Holy Shock")`                  | Casts given spell(s) on any mouse-overed target (friendly, neutral, or enemy.)         |
-| `/pfquickcast@self Hand of Freedom`           | `SlashCmdList.PFQUICKCAST_SELF("Hand of Freedom")`            | Casts given spell(s) on your character.                                                |
-| `/pfquickcast@focus Hand of Freedom`          | `SlashCmdList.PFQUICKCAST_FOCUS("Hand of Freedom")`           | Casts given spell(s) on your focused-target.                                           |
-| `/pfquickcast@enemy Frostbolt`                | `SlashCmdList.PFQUICKCAST_ENEMY("Frostbolt")`                 | Casts given spell(s) on enemy/neutral unit.                                            |
-| `/pfquickcast@friend Holy Shock`              | `SlashCmdList.PFQUICKCAST_FRIEND("Holy Shock")`               | Casts given spell(s) on friendly mouseover.                                            |
-| `/pfquickcast@enemytbf Frostbolt`             | `SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")`             | Casts given spell(s) on enemy targeted-by-friendly; changes target to said enemy unit. |
-| `/pfquickcast@enemytbfc Frostbolt`            | `SlashCmdList.PFQUICKCAST_ENEMY_TBFC("Frostbolt")`            | Casts given spell(s) on enemy targeted-by-focus; changes target to said enemy unit.    |
-| `/pfquickcast@intervene Hand of Protection`   | `SlashCmdList.PFQUICKCAST_INTERVENE("Hand of Protection")`    | Casts given spell(s) on friendly player targeted by enemy.                             |
-| `/pfquickcast@friendtote Holy Light (Rank 6)` | `SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Holy Light (Rank 6)")` | Casts given spell(s) on friendly target of enemy.                                      |
-| `/pfquickcast@directenemy Frostbolt`          | `SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("Frostbolt")`          | Casts given spell(s) on current enemy unit (intentionally ignoring mouse-over.)        |
-| `/pfquickcast@friendcorpse Redemption`        | `SlashCmdList.PFQUICKCAST_FRIEND_CORPSE("Redemption")`        | Casts given spell(s) on current friendly dead unit.                                    |
+| Command                                       | LUA                                                           | Description                                                                              |
+|-----------------------------------------------|---------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| `/pfquickcast@any Holy Shock`                 | `SlashCmdList.PFQUICKCAST_ANY("Holy Shock")`                  | Casts given spell(s) on any mouse-overed target (friendly, neutral, or enemy.)           |
+| `/pfquickcast@self Hand of Freedom`           | `SlashCmdList.PFQUICKCAST_SELF("Hand of Freedom")`            | Casts given spell(s) on your character.                                                  |
+| `/pfquickcast@focus Hand of Freedom`          | `SlashCmdList.PFQUICKCAST_FOCUS("Hand of Freedom")`           | Casts given spell(s) on your focused-target.                                             |
+| `/pfquickcast@enemy Frostbolt`                | `SlashCmdList.PFQUICKCAST_ENEMY("Frostbolt")`                 | Casts given spell(s) on enemy/neutral unit.                                              |
+| `/pfquickcast@friend Holy Shock`              | `SlashCmdList.PFQUICKCAST_FRIEND("Holy Shock")`               | Casts given spell(s) on friendly mouseover.                                              |
+| `/pfquickcast@enemytbf Frostbolt`             | `SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")`             | Casts given spell(s) on enemy targeted-by-friendly; changes target to said enemy unit.   |
+| `/pfquickcast@enemytbfc Frostbolt`            | `SlashCmdList.PFQUICKCAST_ENEMY_TBFC("Frostbolt")`            | Casts given spell(s) on enemy targeted-by-focus; changes target to said enemy unit.      |
+| `/pfquickcast@enemytbfco Frostbolt`           | `SlashCmdList.PFQUICKCAST_ENEMY_TBFCO("Frostbolt")`           | Casts given spell(s) on enemy targeted-by-focus; changes target to said enemy unit once. |
+| `/pfquickcast@intervene Hand of Protection`   | `SlashCmdList.PFQUICKCAST_INTERVENE("Hand of Protection")`    | Casts given spell(s) on friendly player targeted by enemy.                               |
+| `/pfquickcast@friendtote Holy Light (Rank 6)` | `SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Holy Light (Rank 6)")` | Casts given spell(s) on friendly target of enemy.                                        |
+| `/pfquickcast@directenemy Frostbolt`          | `SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("Frostbolt")`          | Casts given spell(s) on current enemy unit (intentionally ignoring mouse-over.)          |
+| `/pfquickcast@friendcorpse Redemption`        | `SlashCmdList.PFQUICKCAST_FRIEND_CORPSE("Redemption")`        | Casts given spell(s) on current friendly dead unit.                                      |
 
 
 ## 📜 Analysis:
@@ -286,6 +287,10 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
 
 Like @enemytbf but instead of mouse-hovering we get the enemy (if any) of your focus unit. If no focus is set or if the unit is not an alive enemy unit
 then the command will do nothing. Use with caution as it will change your current target to the focus unit's enemy target if all conditions are met.
+
+- `/pfquickcast@enemytbfco <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ENEMY_TBFCO("<spell_name>")` )
+
+Like @enemytbfc but grabs the enemy once and sticks with it until it dies.
 
 - `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 

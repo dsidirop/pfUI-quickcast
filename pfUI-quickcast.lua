@@ -193,6 +193,9 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
                 isSpellInRangeVerdict > 0, -- Nampower:IsSpellInRange returns 1 if in range 0 if not and -1 if invalid spell/target
                 nil
             end
+
+            print("** [pfUI-quickcast] [warning] [isSpellTargetInRangeForSpell()] Nampower:IsSpellInRange() failed to check range for spell '" .. tostring(spellRawName) ..
+                    "' and target '" .. tostring(targetUnit) .. "' so we will revert to standard distance-checking - if you believe the spell is valid report this to https://gitea.com/avitasia/nampower")
         end
 
         if possiblePrecalculatedDistanceFromTarget == nil then
@@ -1387,6 +1390,46 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     -- endregion /pfquickcast@enemytbfc
+
+    -- region /pfquickcast@enemytbfco
+
+    local function _deduceIntendedTarget_forEnemyTargetedByFocusOnce()
+        if not unitIsFriend_(_player, _target) and not unitIsDeadOrGhost_(_target) then
+            return _target, false -- if the current target is already a valid enemy unit then we can just go with it
+        end
+
+        local properTarget, shouldToggle = _deduceIntendedTarget_forEnemyTargetedByFocus() -- otherwise use /pfquickcast@enemytbfc logic to get the enemy unit
+        
+        return properTarget, shouldToggle
+    end
+
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO1 = "/pfquickcast@enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO2 = "/pfquickcast:enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO3 = "/pfquickcast.enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO4 = "/pfquickcast_enemytbfco"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFCO5 = "/pfquickcastenemytbfco"
+    function SlashCmdList.PFQUICKCAST_ENEMY_TBFCO(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround = _deduceIntendedTarget_forEnemyTargetedByFocusOnce()
+        if proper_target == nil then
+            return nil
+        end
+
+        return _setTargetIfNeededAndCast(
+                _onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
+        )
+    end
+
+    -- endregion /pfquickcast@enemytbfco
 
     -- region /pfquickcast@healfocus
 
