@@ -175,7 +175,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
         namPowerIsSpellInRange_ = namPowerIsSpellInRange_ or _G.IsSpellInRange
         if namPowerIsSpellInRange_ then -- bear in mind that namPowerIsSpellInRange() needs the spell-name    passing spell-id doesnt work
 
-            if spellRawName == "Power Word: Shield" or spellRawName == "Prayer of Healing" then
+            if spellRawName == "Power Word: Shield" or spellRawName == "Prayer of Healing" or spellRawName == "Resurrection" then
                 -- stupid workaround for an apparent bug plaguing nampower<=4.3.0 which causes the
                 -- range-check to fail for specific spells like priest-shields and paladin-hands
                 -- we will remove this workaround in 2028 when this mechanism has stabilized a bit more 
@@ -1339,6 +1339,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     -- region /pfquickcast@enemytbfc
 
     local function _deduceIntendedTarget_forEnemyTargetedByFocus()
+        _lazySnapshotSpellCastFuncs() -- needed by targetUnit_
 
         local unitOfFocus = _deduceIntendedTarget_forFocus()
         if not unitOfFocus or not unitIsFriend_(_player, unitOfFocus) or unitIsDeadOrGhost_(unitOfFocus) then
