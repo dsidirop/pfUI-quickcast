@@ -63,6 +63,7 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
 | `/pfquickcast@enemy Frostbolt`                | `SlashCmdList.PFQUICKCAST_ENEMY("Frostbolt")`                 | Casts given spell(s) on enemy/neutral unit.                                            |
 | `/pfquickcast@friend Holy Shock`              | `SlashCmdList.PFQUICKCAST_FRIEND("Holy Shock")`               | Casts given spell(s) on friendly mouseover.                                            |
 | `/pfquickcast@enemytbf Frostbolt`             | `SlashCmdList.PFQUICKCAST_ENEMY_TBF("Frostbolt")`             | Casts given spell(s) on enemy targeted-by-friendly; changes target to said enemy unit. |
+| `/pfquickcast@enemytbfc Frostbolt`            | `SlashCmdList.PFQUICKCAST_ENEMY_TBFC("Frostbolt")`            | Casts given spell(s) on enemy targeted-by-focus; changes target to said enemy unit.    |
 | `/pfquickcast@intervene Hand of Protection`   | `SlashCmdList.PFQUICKCAST_INTERVENE("Hand of Protection")`    | Casts given spell(s) on friendly player targeted by enemy.                             |
 | `/pfquickcast@friendtote Holy Light (Rank 6)` | `SlashCmdList.PFQUICKCAST_FRIEND_TOTE("Holy Light (Rank 6)")` | Casts given spell(s) on friendly target of enemy.                                      |
 | `/pfquickcast@directenemy Frostbolt`          | `SlashCmdList.PFQUICKCAST_DIRECT_ENEMY("Frostbolt")`          | Casts given spell(s) on current enemy unit (intentionally ignoring mouse-over.)        |
@@ -281,6 +282,10 @@ The following flavors are (intentionally) **ignored** by the [SmartHealer (exten
   ```
   <br/>
 
+- `/pfquickcast@enemytbfc <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ENEMY_TBFC("<spell_name>")` )
+
+Like @enemytbf but instead of mouse-hovering we get the enemy (if any) of your focus unit. If no focus is set or if the unit is not an alive enemy unit
+then the command will do nothing. Use with caution as it will change your current target to the focus unit's enemy target if all conditions are met.
 
 - `/pfquickcast@any <spell_name>` ( `/script SlashCmdList.PFQUICKCAST_ANY("<spell_name>")` )
 

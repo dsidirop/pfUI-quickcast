@@ -290,7 +290,7 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
     end
 
     local function _tryTranslateUnitToStandardSpelltargetUnit_(unit)
-        if IS_GUID_CASTING_SUPPORTED and _isGuid(input) then
+        if IS_GUID_CASTING_SUPPORTED and _isGuid(unit) then
             -- we dont want to loop over all the standard spell target units if we already have a guid as input
             -- we can directly use it as a spell target unit without any translation
             return unit
@@ -1333,6 +1333,60 @@ pfUI:RegisterModule("QuickCast", "vanilla", function()
 
     -- endregion /pfquickcast@focus
 
+    -- region /pfquickcast@enemytbfc
+
+    local function _deduceIntendedTarget_forEnemyTargetedByFocus()
+
+        local unitOfFocus = _deduceIntendedTarget_forFocus()
+        if not unitOfFocus or not unitIsFriend_(_player, unitOfFocus) or unitIsDeadOrGhost_(unitOfFocus) then
+            return nil, false
+        end
+
+        local switchedToFocusTargetFirst = false
+        if not unitIsUnit_(_target, unitOfFocus) then
+            targetUnit_(unitOfFocus)
+            switchedToFocusTargetFirst = true
+        end
+
+        if not unitIsFriend_(_player, _target_of_target) and not unitIsDeadOrGhost_(_target_of_target) then
+            targetUnit_(_target_of_target) -- switch to the target of the focus
+            return _target, false
+        end
+
+        if switchedToFocusTargetFirst then -- reset back to last target if the focus target wasnt targeting a valid enemy unit
+            targetLastTarget_()    
+        end
+        
+        return nil, false -- no valid target found
+    end
+
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC1 = "/pfquickcast@enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC2 = "/pfquickcast:enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC3 = "/pfquickcast.enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC4 = "/pfquickcast_enemytbfc"
+    _G.SLASH_PFQUICKCAST_ENEMY_TBFC5 = "/pfquickcastenemytbfc"
+    function SlashCmdList.PFQUICKCAST_ENEMY_TBFC(spellsString)
+        -- local func = loadstring(spell or "")   intentionally disabled to avoid overhead
+
+        if not spellsString then
+            return nil
+        end
+
+        local proper_target, use_target_toggle_workaround = _deduceIntendedTarget_forEnemyTargetedByFocus()
+        if proper_target == nil then
+            return nil
+        end
+
+        return _setTargetIfNeededAndCast(
+                _onCast,
+                spellsString,
+                proper_target,
+                use_target_toggle_workaround,
+                false -- intention_is_focus_cast
+        )
+    end
+
+    -- endregion /pfquickcast@enemytbfc
 
     -- region /pfquickcast@healfocus
 
